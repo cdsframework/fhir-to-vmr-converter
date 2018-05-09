@@ -21,11 +21,11 @@ public class FhirPatient2Vmr {
     public static void setPatientData(CdsInputWrapper input, JsonObject prefetchObject, Gson gson, String patientId, String fhirServer, String accessToken) {
         final String METHODNAME = "setPatientData ";
         JsonElement patientResourceElement;
-        if (prefetchObject != null) {
+        if (prefetchObject != null && prefetchObject.getAsJsonObject("patient") != null) {
             JsonObject patientObject = prefetchObject.getAsJsonObject("patient");
             patientResourceElement = patientObject.get("resource");
         } else {
-            patientResourceElement = VmrUtils.retrieveResource(gson, fhirServer + "/Patient/" + patientId, accessToken);
+            patientResourceElement = VmrUtils.retrieveResource(gson, fhirServer + "Patient/" + patientId, accessToken);
         }
         logger.debug(METHODNAME, "patientResourceElement=", gson.toJson(patientResourceElement));
         FhirContext ctx = FhirContext.forDstu3();
@@ -34,8 +34,8 @@ public class FhirPatient2Vmr {
             if (patient != null) {
                 Date birthDate = patient.getBirthDate();
                 org.hl7.fhir.dstu3.model.Enumerations.AdministrativeGender gender = patient.getGender();
-                logger.warn(METHODNAME, "birthDate=", birthDate);
-                logger.warn(METHODNAME, "gender=", gender);
+                logger.debug(METHODNAME, "birthDate=", birthDate);
+                logger.debug(METHODNAME, "gender=", gender);
                 if (patient.getGender() != null) {
                     input.setPatientGender(patient.getGender().toCode(), FhirConstants.GENDER_CODE_SYSTEM);
                 }
@@ -43,7 +43,7 @@ public class FhirPatient2Vmr {
                     input.setPatientBirthTime(patient.getBirthDate());
                 }
             }
-            logger.warn(METHODNAME, "patient=", patient);
+            logger.debug(METHODNAME, "patient=", patient);
         } catch (Exception e) {
             logger.error(e);
             ctx = FhirContext.forDstu2();
@@ -51,8 +51,8 @@ public class FhirPatient2Vmr {
             if (patient != null) {
                 Date birthDate = patient.getBirthDate();
                 String gender = patient.getGender();
-                logger.warn(METHODNAME, "birthDate=", birthDate);
-                logger.warn(METHODNAME, "gender=", gender);
+                logger.debug(METHODNAME, "birthDate=", birthDate);
+                logger.debug(METHODNAME, "gender=", gender);
                 if (patient.getGender() != null) {
                     input.setPatientGender(patient.getGender(), FhirConstants.GENDER_CODE_SYSTEM);
                 }
@@ -60,7 +60,7 @@ public class FhirPatient2Vmr {
                     input.setPatientBirthTime(patient.getBirthDate());
                 }
             }
-            logger.warn(METHODNAME, "patient=", patient);
+            logger.debug(METHODNAME, "patient=", patient);
 
         }
     }

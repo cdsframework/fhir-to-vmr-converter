@@ -5,6 +5,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import org.cdsframework.cds.vmr.CdsInputWrapper;
+import org.cdsframework.cds.vmr.CdsObjectAssist;
 import org.cdsframework.messageconverter.fhir.convert.utils.VmrUtils;
 import org.cdsframework.messageconverter.fhir.convert.vmr.FhirCondition2Vmr;
 import org.cdsframework.messageconverter.fhir.convert.vmr.FhirDiagnosticReport2Vmr;
@@ -38,6 +39,9 @@ class Fhir2Vmr {
         // get the fhir server url
         JsonPrimitive fhirServerObject = jsonObject.getAsJsonPrimitive("fhirServer");
         String fhirServer = fhirServerObject.getAsString();
+        if (!fhirServer.endsWith("/")) {
+            fhirServer = fhirServer + "/";
+        }
         logger.warn(METHODNAME, "fhirServer=", fhirServer);
 
         // get the fhir server access token
@@ -66,6 +70,8 @@ class Fhir2Vmr {
         FhirObservation2Vmr.setObservationData(input, prefetchObject, gson, patientId, fhirServer, accessToken);
         FhirProcedure2Vmr.setProcedureData(input, prefetchObject, gson, patientId, fhirServer, accessToken);
 
+//        String cdsObjectToString = CdsObjectAssist.cdsObjectToString(result, CDSInput.class);
+//        logger.warn(METHODNAME, "result=", cdsObjectToString);
         return result;
     }
 }

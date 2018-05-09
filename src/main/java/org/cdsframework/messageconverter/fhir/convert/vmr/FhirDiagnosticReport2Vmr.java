@@ -23,26 +23,26 @@ public class FhirDiagnosticReport2Vmr {
             JsonObject diagnosticReportElement = prefetchObject.getAsJsonObject("condition");
             diagnosticReportResourceElement = diagnosticReportElement.get("resource");
         } else {
-            diagnosticReportResourceElement = VmrUtils.retrieveResource(gson, fhirServer + "/DiagnosticReport?patient=" + patientId, accessToken);
+            diagnosticReportResourceElement = VmrUtils.retrieveResource(gson, fhirServer + "DiagnosticReport?patient=" + patientId, accessToken);
         }
-        logger.warn(METHODNAME, "diagnosticReportResourceElement=", gson.toJson(diagnosticReportResourceElement));
+        logger.debug(METHODNAME, "diagnosticReportResourceElement=", gson.toJson(diagnosticReportResourceElement));
         FhirContext ctx = FhirContext.forDstu3();
         try {
             org.hl7.fhir.dstu3.model.Bundle diagnosticReports = (org.hl7.fhir.dstu3.model.Bundle) ctx.newJsonParser().parseResource(gson.toJson(diagnosticReportResourceElement));
-            logger.warn(METHODNAME, "diagnosticReports=", diagnosticReports);
+            logger.debug(METHODNAME, "diagnosticReports=", diagnosticReports);
             for (org.hl7.fhir.dstu3.model.Bundle.BundleEntryComponent item : diagnosticReports.getEntry()) {
                 org.hl7.fhir.dstu3.model.DiagnosticReport diagnosticReport = (org.hl7.fhir.dstu3.model.DiagnosticReport) item.getResource();
-                logger.warn(METHODNAME, "diagnosticReport=", diagnosticReport);
+                logger.debug(METHODNAME, "diagnosticReport=", diagnosticReport);
             }
         } catch (Exception e) {
             logger.error(e);
             ctx = FhirContext.forDstu2();
             try {
                 ca.uhn.fhir.model.dstu2.resource.Bundle diagnosticReports = (ca.uhn.fhir.model.dstu2.resource.Bundle) ctx.newJsonParser().parseResource(gson.toJson(diagnosticReportResourceElement));
-                logger.warn(METHODNAME, "diagnosticReports=", diagnosticReports);
+                logger.debug(METHODNAME, "diagnosticReports=", diagnosticReports);
                 for (ca.uhn.fhir.model.dstu2.resource.Bundle.Entry item : diagnosticReports.getEntry()) {
                     ca.uhn.fhir.model.dstu2.resource.DiagnosticReport diagnosticReport = (ca.uhn.fhir.model.dstu2.resource.DiagnosticReport) item.getResource();
-                    logger.warn(METHODNAME, "diagnosticReport=", diagnosticReport);
+                    logger.debug(METHODNAME, "diagnosticReport=", diagnosticReport);
                 }
             } catch (Exception ex) {
                 logger.error(ex);

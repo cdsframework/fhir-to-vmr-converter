@@ -19,6 +19,11 @@
             <version>1.0.10</version>
         </dependency>
         <dependency>
+            <groupId>org.cdsframework</groupId>
+            <artifactId>cdsframework-support-ice</artifactId>
+            <version>1.0.1</version>
+        </dependency>
+        <dependency>
             <groupId>ca.uhn.hapi.fhir</groupId>
             <artifactId>hapi-fhir-structures-dstu3</artifactId>
             <version>3.3.0</version>
