@@ -23,26 +23,26 @@ public class FhirProcedure2Vmr {
             JsonObject procedureElement = prefetchObject.getAsJsonObject("condition");
             procedureResourceElement = procedureElement.get("resource");
         } else {
-            procedureResourceElement = VmrUtils.retrieveResource(gson, fhirServer + "/Procedure?patient=" + patientId, accessToken);
+            procedureResourceElement = VmrUtils.retrieveResource(gson, fhirServer + "Procedure?patient=" + patientId, accessToken);
         }
-        logger.warn(METHODNAME, "procedureResourceElement=", gson.toJson(procedureResourceElement));
+        logger.debug(METHODNAME, "procedureResourceElement=", gson.toJson(procedureResourceElement));
         FhirContext ctx = FhirContext.forDstu3();
         try {
             org.hl7.fhir.dstu3.model.Bundle procedures = (org.hl7.fhir.dstu3.model.Bundle) ctx.newJsonParser().parseResource(gson.toJson(procedureResourceElement));
-            logger.warn(METHODNAME, "procedures=", procedures);
+            logger.debug(METHODNAME, "procedures=", procedures);
             for (org.hl7.fhir.dstu3.model.Bundle.BundleEntryComponent item : procedures.getEntry()) {
                 org.hl7.fhir.dstu3.model.Procedure procedure = (org.hl7.fhir.dstu3.model.Procedure) item.getResource();
-                logger.warn(METHODNAME, "procedure=", procedure);
+                logger.debug(METHODNAME, "procedure=", procedure);
             }
         } catch (Exception e) {
             logger.error(e);
             ctx = FhirContext.forDstu2();
             try {
                 ca.uhn.fhir.model.dstu2.resource.Bundle procedures = (ca.uhn.fhir.model.dstu2.resource.Bundle) ctx.newJsonParser().parseResource(gson.toJson(procedureResourceElement));
-                logger.warn(METHODNAME, "procedures=", procedures);
+                logger.debug(METHODNAME, "procedures=", procedures);
                 for (ca.uhn.fhir.model.dstu2.resource.Bundle.Entry item : procedures.getEntry()) {
                     ca.uhn.fhir.model.dstu2.resource.Procedure procedure = (ca.uhn.fhir.model.dstu2.resource.Procedure) item.getResource();
-                    logger.warn(METHODNAME, "procedure=", procedure);
+                    logger.debug(METHODNAME, "procedure=", procedure);
                 }
             } catch (Exception ex) {
                 logger.error(ex);
