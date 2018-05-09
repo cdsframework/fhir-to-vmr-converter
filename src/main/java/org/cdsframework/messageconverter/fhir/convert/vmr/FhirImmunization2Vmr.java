@@ -5,6 +5,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import org.cdsframework.cds.vmr.CdsInputWrapper;
+import org.cdsframework.messageconverter.fhir.convert.utils.VmrUtils;
 import org.cdsframework.util.LogUtils;
 
 /**
@@ -17,8 +18,13 @@ public class FhirImmunization2Vmr {
 
     public static void setImmunizationData(CdsInputWrapper input, JsonObject prefetchObject, Gson gson, String patientId, String fhirServer, String accessToken) {
         final String METHODNAME = "setImmunizationData ";
-        JsonObject immunizationElement = prefetchObject.getAsJsonObject("immunization");
-        JsonElement immunizationResourceElement = immunizationElement.get("resource");
+        JsonElement immunizationResourceElement;
+        if (prefetchObject != null) {
+            JsonObject immunizationElement = prefetchObject.getAsJsonObject("condition");
+            immunizationResourceElement = immunizationElement.get("resource");
+        } else {
+            immunizationResourceElement = VmrUtils.retrieveResource(gson, fhirServer + "/Immunization?patient=" + patientId, accessToken);
+        }
         logger.warn(METHODNAME, "immunizationResourceElement=", gson.toJson(immunizationResourceElement));
         FhirContext ctx = FhirContext.forDstu3();
         try {

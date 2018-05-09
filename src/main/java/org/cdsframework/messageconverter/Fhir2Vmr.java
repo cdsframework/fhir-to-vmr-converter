@@ -42,8 +42,11 @@ class Fhir2Vmr {
 
         // get the fhir server access token
         JsonObject fhirAuthorizationObject = jsonObject.getAsJsonObject("fhirAuthorization");
-        JsonPrimitive accessTokenOnject = fhirAuthorizationObject.getAsJsonPrimitive("access_token");
-        String accessToken = accessTokenOnject.getAsString();
+        String accessToken = null;
+        if (fhirAuthorizationObject != null) {
+            JsonPrimitive accessTokenOnject = fhirAuthorizationObject.getAsJsonPrimitive("access_token");
+            accessToken = accessTokenOnject.getAsString();
+        }
         logger.warn(METHODNAME, "accessToken=", accessToken);
 
         // get the prefetch object
@@ -61,7 +64,7 @@ class Fhir2Vmr {
         FhirEncounter2Vmr.setEncounterData(input, prefetchObject, gson, patientId, fhirServer, accessToken);
         FhirImmunization2Vmr.setImmunizationData(input, prefetchObject, gson, patientId, fhirServer, accessToken);
         FhirObservation2Vmr.setObservationData(input, prefetchObject, gson, patientId, fhirServer, accessToken);
-        FhirProcedure2Vmr.setProcedureData(input, prefetchObject, gson, patientId,fhirServer, accessToken);
+        FhirProcedure2Vmr.setProcedureData(input, prefetchObject, gson, patientId, fhirServer, accessToken);
 
         return result;
     }
