@@ -7,6 +7,7 @@ import com.google.gson.JsonObject;
 import java.util.Date;
 import org.cdsframework.cds.vmr.CdsInputWrapper;
 import org.cdsframework.messageconverter.fhir.convert.utils.FhirConstants;
+import org.cdsframework.messageconverter.fhir.convert.utils.VmrUtils;
 import org.cdsframework.util.LogUtils;
 
 /**
@@ -19,8 +20,13 @@ public class FhirPatient2Vmr {
 
     public static void setPatientData(CdsInputWrapper input, JsonObject prefetchObject, Gson gson, String patientId, String fhirServer, String accessToken) {
         final String METHODNAME = "setPatientData ";
-        JsonObject patientObject = prefetchObject.getAsJsonObject("patient");
-        JsonElement patientResourceElement = patientObject.get("resource");
+        JsonElement patientResourceElement;
+        if (prefetchObject != null) {
+            JsonObject patientObject = prefetchObject.getAsJsonObject("patient");
+            patientResourceElement = patientObject.get("resource");
+        } else {
+            patientResourceElement = VmrUtils.retrieveResource(gson, fhirServer + "/Patient/" + patientId, accessToken);
+        }
         logger.debug(METHODNAME, "patientResourceElement=", gson.toJson(patientResourceElement));
         FhirContext ctx = FhirContext.forDstu3();
         try {

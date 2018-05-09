@@ -1,5 +1,8 @@
 package org.cdsframework.messageconverter.fhir.convert.utils;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Invocation;
@@ -33,19 +36,29 @@ public class VmrUtils {
         cdsInput.getCdsContext().setCdsSystemUserType(systemUserType);
     }
 
-    public static void retrieveResource(String url, String accessToken) {
+    public static JsonElement retrieveResource(Gson gson, String url, String accessToken) {
+        final String METHODNAME = "retrieveResource ";
+        JsonElement jsonElement = null;
         Client client = ClientBuilder.newClient();
         WebTarget resource = client.target(url);
-        Invocation.Builder request = resource.request().header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken);
+        Invocation.Builder request = resource.request();
+        if (accessToken != null) {
+            request.header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken);
+        }
+
         request.accept(MediaType.APPLICATION_JSON);
 
         Response response = request.get();
         if (response.getStatusInfo().getFamily() == Response.Status.Family.SUCCESSFUL) {
-            logger.warn("Success! " + response.getStatus());
-            logger.warn(response.readEntity(String.class));
+            logger.warn(METHODNAME, "Success! status=" + response.getStatus());
+            String entity = response.readEntity(String.class);
+            logger.warn(METHODNAME, "entity=", entity);
+            jsonElement = gson.fromJson(entity, JsonElement.class);
         } else {
-            logger.warn("ERROR! " + response.getStatus());
-            logger.warn(response.readEntity(String.class));
+            logger.warn(METHODNAME, "ERROR! status=" + response.getStatus());
+            String entity = response.readEntity(String.class);
+            logger.warn(METHODNAME, "entity=", entity);
         }
+        return jsonElement;
     }
 }

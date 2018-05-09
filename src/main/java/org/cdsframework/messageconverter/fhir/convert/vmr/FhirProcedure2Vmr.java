@@ -5,6 +5,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import org.cdsframework.cds.vmr.CdsInputWrapper;
+import org.cdsframework.messageconverter.fhir.convert.utils.VmrUtils;
 import org.cdsframework.util.LogUtils;
 
 /**
@@ -17,8 +18,13 @@ public class FhirProcedure2Vmr {
 
     public static void setProcedureData(CdsInputWrapper input, JsonObject prefetchObject, Gson gson, String patientId, String fhirServer, String accessToken) {
         final String METHODNAME = "setProcedureData ";
-        JsonObject procedureElement = prefetchObject.getAsJsonObject("procedure");
-        JsonElement procedureResourceElement = procedureElement.get("resource");
+        JsonElement procedureResourceElement;
+        if (prefetchObject != null) {
+            JsonObject procedureElement = prefetchObject.getAsJsonObject("condition");
+            procedureResourceElement = procedureElement.get("resource");
+        } else {
+            procedureResourceElement = VmrUtils.retrieveResource(gson, fhirServer + "/Procedure?patient=" + patientId, accessToken);
+        }
         logger.warn(METHODNAME, "procedureResourceElement=", gson.toJson(procedureResourceElement));
         FhirContext ctx = FhirContext.forDstu3();
         try {
