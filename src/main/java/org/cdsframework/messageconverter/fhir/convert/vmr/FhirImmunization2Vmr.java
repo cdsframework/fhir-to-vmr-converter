@@ -32,19 +32,27 @@ public class FhirImmunization2Vmr {
     public static void setImmunizationData(CdsInputWrapper input, JsonObject prefetchObject, Gson gson, String patientId, String fhirServer, String accessToken) {
         final String METHODNAME = "setImmunizationData ";
         IceCdsInputWrapper iceInput = new IceCdsInputWrapper(input);
-        JsonElement immunizationResourceElement;
-        if (prefetchObject != null) {
-            JsonObject immunizationElement = prefetchObject.getAsJsonObject("condition");
+        JsonElement immunizationResourceElement = null;
+        boolean dataMissing = true;
+        if (prefetchObject != null && prefetchObject.getAsJsonObject("immunization") != null) {
+            dataMissing = false;
+            JsonObject immunizationElement = prefetchObject.getAsJsonObject("immunization");
             immunizationResourceElement = immunizationElement.get("resource");
-        } else {
-            immunizationResourceElement = VmrUtils.retrieveResource(gson, fhirServer + "Immunization?patient=" + patientId, accessToken);
         }
-        logger.debug(METHODNAME, "immunizationResourceElement=", gson.toJson(immunizationResourceElement));
+        if (dataMissing) {
+            immunizationResourceElement = VmrUtils.getMissingData(gson, "Immunization", patientId, fhirServer, accessToken);
+        }
         FhirContext ctx = FhirContext.forDstu3();
         try {
             org.hl7.fhir.dstu3.model.Bundle immunizations = (org.hl7.fhir.dstu3.model.Bundle) ctx.newJsonParser().parseResource(gson.toJson(immunizationResourceElement));
-            logger.debug(METHODNAME, "immunizations=", immunizations);
-            for (org.hl7.fhir.dstu3.model.Bundle.BundleEntryComponent item : immunizations.getEntry()) {
+            List<org.hl7.fhir.dstu3.model.Bundle.BundleEntryComponent> entry = immunizations.getEntry();
+            if (entry.isEmpty()) {
+                immunizationResourceElement = VmrUtils.getMissingData(gson, "Immunization", patientId, fhirServer, accessToken);
+                immunizations = (org.hl7.fhir.dstu3.model.Bundle) ctx.newJsonParser().parseResource(gson.toJson(immunizationResourceElement));
+                entry = immunizations.getEntry();
+            }
+//            logger.warn(METHODNAME, "immunizationResourceElement=", gson.toJson(immunizationResourceElement));
+            for (org.hl7.fhir.dstu3.model.Bundle.BundleEntryComponent item : entry) {
                 org.hl7.fhir.dstu3.model.Immunization immunization = (org.hl7.fhir.dstu3.model.Immunization) item.getResource();
                 setDstu3ImmunizationOnCdsInput(immunization, iceInput);
             }
@@ -92,21 +100,20 @@ public class FhirImmunization2Vmr {
 
     private static void setDstu3ImmunizationOnCdsInput(org.hl7.fhir.dstu3.model.Immunization immunization, IceCdsInputWrapper iceInput) {
         final String METHODNAME = "setDstu3ImmunizationOnCdsInput ";
-        logger.debug(METHODNAME, "immunization=", immunization);
-        logger.warn(METHODNAME, "immunization.getNotGiven()=", immunization.getNotGiven());
-        logger.warn(METHODNAME, "immunization.hasDate()=", immunization.hasDate());
-        logger.warn(METHODNAME, "immunization.hasVaccineCode()=", immunization.hasVaccineCode());
+        if (immunization != null) {
+            logger.debug(METHODNAME, "immunization=", immunization);
+            logger.warn(METHODNAME, "immunization.getNotGiven()=", immunization.getNotGiven());
+            logger.warn(METHODNAME, "immunization.hasDate()=", immunization.hasDate());
+            logger.warn(METHODNAME, "immunization.hasVaccineCode()=", immunization.hasVaccineCode());
+        }
         if (immunization != null
                 && !immunization.getNotGiven()
                 && immunization.hasDate()
+                && immunization.hasId()
                 && immunization.hasVaccineCode()) {
             logger.warn(METHODNAME, "adding immunization ", immunization.getId());
-            List<Coding> codingList = immunization.getVaccineCode().getCoding();
-            if (!codingList.isEmpty()) {
-                if (codingList.size() > 1) {
-                    logger.warn(METHODNAME, "coding size is greater than 1! ", codingList);
-                }
-                Coding coding = codingList.get(0);
+            Coding coding = VmrUtils.getFirstCoding(immunization.getVaccineCode());
+            if (coding != null) {
                 String substanceCodeOid = CODE_SYSTEM_MAP.get(coding.getSystem());
                 if (substanceCodeOid == null) {
                     logger.error(METHODNAME, "missing code system mapping: ", coding.getSystem());

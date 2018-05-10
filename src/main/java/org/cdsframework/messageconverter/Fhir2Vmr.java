@@ -64,14 +64,14 @@ class Fhir2Vmr {
         VmrUtils.setSystemUserType(result);
         FhirPatient2Vmr.setPatientData(input, prefetchObject, gson, patientId, fhirServer, accessToken);
         FhirCondition2Vmr.setConditionData(input, prefetchObject, gson, patientId, fhirServer, accessToken);
-        FhirDiagnosticReport2Vmr.setDiagnosticReportData(input, prefetchObject, gson, patientId, fhirServer, accessToken);
-        FhirEncounter2Vmr.setEncounterData(input, prefetchObject, gson, patientId, fhirServer, accessToken);
+        //FhirDiagnosticReport2Vmr.setDiagnosticReportData(input, prefetchObject, gson, patientId, fhirServer, accessToken);
+        //FhirEncounter2Vmr.setEncounterData(input, prefetchObject, gson, patientId, fhirServer, accessToken);
         FhirImmunization2Vmr.setImmunizationData(input, prefetchObject, gson, patientId, fhirServer, accessToken);
         FhirObservation2Vmr.setObservationData(input, prefetchObject, gson, patientId, fhirServer, accessToken);
-        FhirProcedure2Vmr.setProcedureData(input, prefetchObject, gson, patientId, fhirServer, accessToken);
+        //FhirProcedure2Vmr.setProcedureData(input, prefetchObject, gson, patientId, fhirServer, accessToken);
 
-//        String cdsObjectToString = CdsObjectAssist.cdsObjectToString(result, CDSInput.class);
-//        logger.warn(METHODNAME, "result=", cdsObjectToString);
+        String cdsObjectToString = CdsObjectAssist.cdsObjectToString(result, CDSInput.class);
+        logger.warn(METHODNAME, "result=", cdsObjectToString);
         return result;
     }
 }

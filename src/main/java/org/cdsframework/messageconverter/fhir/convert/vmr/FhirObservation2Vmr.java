@@ -9,10 +9,6 @@ import org.cdsframework.cds.vmr.CdsInputWrapper;
 import org.cdsframework.messageconverter.fhir.convert.utils.VmrUtils;
 import org.cdsframework.util.LogUtils;
 import org.cdsframework.util.support.cds.Config;
-import org.hl7.fhir.dstu3.model.Bundle;
-import org.hl7.fhir.dstu3.model.Coding;
-import org.hl7.fhir.dstu3.model.DateTimeType;
-import org.hl7.fhir.dstu3.model.Observation.ObservationComponentComponent;
 import org.hl7.fhir.exceptions.FHIRException;
 
 /**
@@ -33,19 +29,19 @@ public class FhirObservation2Vmr {
             observationResourceElement = observationElement.get("resource");
         }
         if (dataMissing) {
-            observationResourceElement = getMissingData(gson, patientId, fhirServer, accessToken);
+            observationResourceElement = VmrUtils.getMissingData(gson, "Observation", patientId, fhirServer, accessToken);
         }
-//        logger.debug(METHODNAME, "observationResourceElement=", gson.toJson(observationResourceElement));
         FhirContext ctx = FhirContext.forDstu3();
         try {
             org.hl7.fhir.dstu3.model.Bundle observations = (org.hl7.fhir.dstu3.model.Bundle) ctx.newJsonParser().parseResource(gson.toJson(observationResourceElement));
-            List<Bundle.BundleEntryComponent> entry = observations.getEntry();
+            List<org.hl7.fhir.dstu3.model.Bundle.BundleEntryComponent> entry = observations.getEntry();
             if (entry.isEmpty()) {
-                observationResourceElement = getMissingData(gson, patientId, fhirServer, accessToken);
+                observationResourceElement = VmrUtils.getMissingData(gson, "Observation", patientId, fhirServer, accessToken);
                 observations = (org.hl7.fhir.dstu3.model.Bundle) ctx.newJsonParser().parseResource(gson.toJson(observationResourceElement));
                 entry = observations.getEntry();
             }
-            for (org.hl7.fhir.dstu3.model.Bundle.BundleEntryComponent item : observations.getEntry()) {
+//            logger.warn(METHODNAME, "observationResourceElement=", gson.toJson(observationResourceElement));
+            for (org.hl7.fhir.dstu3.model.Bundle.BundleEntryComponent item : entry) {
                 org.hl7.fhir.dstu3.model.Observation observation = (org.hl7.fhir.dstu3.model.Observation) item.getResource();
                 setDstu3ObservationOnCdsInput(observation, input);
             }
@@ -66,7 +62,7 @@ public class FhirObservation2Vmr {
 
         // add phony zika result for demonstrative purposes
         input.addObservationResult(
-                "80823-8" ,
+                "80823-8",
                 "Zika virus IgM Ab [Presence] in Cerebral spinal fluid by Immunoassay",
                 "2.16.840.1.113883.6.1",
                 "LOINC",
@@ -78,10 +74,6 @@ public class FhirObservation2Vmr {
                 "4.1.1.1");
     }
 
-    private static JsonElement getMissingData(Gson gson, String patientId, String fhirServer, String accessToken) {
-        return VmrUtils.retrieveResource(gson, fhirServer + "Observation?patient=" + patientId, accessToken);
-    }
-
     private static void setDstu2ObservationOnCdsInput(ca.uhn.fhir.model.dstu2.resource.Observation observation, CdsInputWrapper input) {
         final String METHODNAME = "setDstu2ObservationOnCdsInput ";
         logger.debug(METHODNAME, "observation=", observation);
@@ -90,12 +82,14 @@ public class FhirObservation2Vmr {
 
     private static void setDstu3ObservationOnCdsInput(org.hl7.fhir.dstu3.model.Observation observation, CdsInputWrapper input) throws FHIRException {
         final String METHODNAME = "setDstu3ObservationOnCdsInput ";
-        logger.warn(METHODNAME, "observation.hasExtension()=", observation.hasExtension());
-        logger.warn(METHODNAME, "observation.hasId()=", observation.hasId());
-        logger.warn(METHODNAME, "observation.hasEffectiveDateTimeType()=", observation.hasEffectiveDateTimeType());
-        logger.warn(METHODNAME, "observation.hasCode()=", observation.hasCode());
-        logger.warn(METHODNAME, "observation.hasValueCodeableConcept()=", observation.hasValueCodeableConcept());
-        logger.warn(METHODNAME, "observation.hasComponent()=", observation.hasComponent());
+        if (observation != null) {
+            logger.warn(METHODNAME, "observation.hasExtension()=", observation.hasExtension());
+            logger.warn(METHODNAME, "observation.hasId()=", observation.hasId());
+            logger.warn(METHODNAME, "observation.hasEffectiveDateTimeType()=", observation.hasEffectiveDateTimeType());
+            logger.warn(METHODNAME, "observation.hasCode()=", observation.hasCode());
+            logger.warn(METHODNAME, "observation.hasValueCodeableConcept()=", observation.hasValueCodeableConcept());
+            logger.warn(METHODNAME, "observation.hasComponent()=", observation.hasComponent());
+        }
         if (observation != null
                 && !observation.hasExtension()
                 && observation.hasId()
@@ -107,7 +101,7 @@ public class FhirObservation2Vmr {
             String id = observation.getId();
 
             // effective date
-            DateTimeType effectiveDateTimeType = observation.getEffectiveDateTimeType();
+            org.hl7.fhir.dstu3.model.DateTimeType effectiveDateTimeType = observation.getEffectiveDateTimeType();
             Integer year = effectiveDateTimeType.getYear();
             Integer month = effectiveDateTimeType.getMonth();
             Integer day = effectiveDateTimeType.getDay();
@@ -131,7 +125,8 @@ public class FhirObservation2Vmr {
                             id);
                 }
             } else if (observation.hasComponent()) {
-                for (ObservationComponentComponent component : observation.getComponent()) {
+                for (org.hl7.fhir.dstu3.model.Observation.ObservationComponentComponent component
+                        : observation.getComponent()) {
                     if (component != null && component.hasCode() && component.hasValueCodeableConcept()) {
                         addDstu3ObservationToCdsInput(
                                 input,
@@ -145,7 +140,7 @@ public class FhirObservation2Vmr {
         }
     }
 
-    private static void addDstu3ObservationToCdsInput(CdsInputWrapper input, Coding focusCoding, Coding valueCoding, String effectiveDate, String id) {
+    private static void addDstu3ObservationToCdsInput(CdsInputWrapper input, org.hl7.fhir.dstu3.model.Coding focusCoding, org.hl7.fhir.dstu3.model.Coding valueCoding, String effectiveDate, String id) {
         String focusCode = focusCoding.getCode();
         String focusDisplayName = focusCoding.getDisplay();
         String focusOid = VmrUtils.getOid(focusCoding.getSystem());

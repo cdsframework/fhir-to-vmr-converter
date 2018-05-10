@@ -19,8 +19,8 @@ public class FhirProcedure2Vmr {
     public static void setProcedureData(CdsInputWrapper input, JsonObject prefetchObject, Gson gson, String patientId, String fhirServer, String accessToken) {
         final String METHODNAME = "setProcedureData ";
         JsonElement procedureResourceElement;
-        if (prefetchObject != null) {
-            JsonObject procedureElement = prefetchObject.getAsJsonObject("condition");
+        if (prefetchObject != null && prefetchObject.getAsJsonObject("procedure") != null) {
+            JsonObject procedureElement = prefetchObject.getAsJsonObject("procedure");
             procedureResourceElement = procedureElement.get("resource");
         } else {
             procedureResourceElement = VmrUtils.retrieveResource(gson, fhirServer + "Procedure?patient=" + patientId, accessToken);

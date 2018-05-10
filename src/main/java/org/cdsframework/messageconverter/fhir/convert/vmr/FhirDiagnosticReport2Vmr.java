@@ -19,8 +19,8 @@ public class FhirDiagnosticReport2Vmr {
     public static void setDiagnosticReportData(CdsInputWrapper input, JsonObject prefetchObject, Gson gson, String patientId, String fhirServer, String accessToken) {
         final String METHODNAME = "setDiagnosticReportData ";
         JsonElement diagnosticReportResourceElement;
-        if (prefetchObject != null) {
-            JsonObject diagnosticReportElement = prefetchObject.getAsJsonObject("condition");
+        if (prefetchObject != null && prefetchObject.getAsJsonObject("diagnosticreport") != null) {
+            JsonObject diagnosticReportElement = prefetchObject.getAsJsonObject("diagnosticreport");
             diagnosticReportResourceElement = diagnosticReportElement.get("resource");
         } else {
             diagnosticReportResourceElement = VmrUtils.retrieveResource(gson, fhirServer + "DiagnosticReport?patient=" + patientId, accessToken);
