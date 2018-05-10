@@ -19,8 +19,10 @@ public class FhirEncounter2Vmr {
     public static void setEncounterData(CdsInputWrapper input, JsonObject prefetchObject, Gson gson, String patientId, String fhirServer, String accessToken) {
         final String METHODNAME = "setEncounterData ";
         JsonElement encounterResourceElement;
-        if (prefetchObject != null) {
-            JsonObject encounterElement = prefetchObject.getAsJsonObject("condition");
+        boolean dataMissing = true;
+        if (prefetchObject != null && prefetchObject.getAsJsonObject("encounter") != null) {
+            dataMissing = false;
+            JsonObject encounterElement = prefetchObject.getAsJsonObject("encounter");
             encounterResourceElement = encounterElement.get("resource");
         } else {
             encounterResourceElement = VmrUtils.retrieveResource(gson, fhirServer + "Encounter?patient=" + patientId, accessToken);

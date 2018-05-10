@@ -153,4 +153,8 @@ public class VmrUtils {
         }
         return result;
     }
+
+    public static JsonElement getMissingData(Gson gson, String objectName, String patientId, String fhirServer, String accessToken) {
+        return VmrUtils.retrieveResource(gson, fhirServer + objectName + "?patient=" + patientId, accessToken);
+    }
 }
