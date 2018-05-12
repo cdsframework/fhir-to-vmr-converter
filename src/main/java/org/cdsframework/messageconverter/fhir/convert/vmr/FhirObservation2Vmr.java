@@ -23,10 +23,12 @@ public class FhirObservation2Vmr {
         final String METHODNAME = "setObservationData ";
         JsonElement observationResourceElement = null;
         boolean dataMissing = true;
-        if (prefetchObject != null & prefetchObject.getAsJsonObject("observation") != null) {
-            dataMissing = false;
+        if (prefetchObject != null && prefetchObject.has("observation")) {
             JsonObject observationElement = prefetchObject.getAsJsonObject("observation");
-            observationResourceElement = observationElement.get("resource");
+            if (observationElement != null) {
+                observationResourceElement = observationElement.get("resource");
+                dataMissing = false;
+            }
         }
         if (dataMissing) {
             observationResourceElement = VmrUtils.getMissingData(gson, "Observation", patientId, fhirServer, accessToken);
