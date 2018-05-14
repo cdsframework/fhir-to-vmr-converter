@@ -2,18 +2,16 @@ package org.cdsframework.messageconverter;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
+import com.google.gson.JsonNull;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import org.cdsframework.cds.vmr.CdsInputWrapper;
 import org.cdsframework.cds.vmr.CdsObjectAssist;
 import org.cdsframework.messageconverter.fhir.convert.utils.VmrUtils;
 import org.cdsframework.messageconverter.fhir.convert.vmr.FhirCondition2Vmr;
-import org.cdsframework.messageconverter.fhir.convert.vmr.FhirDiagnosticReport2Vmr;
-import org.cdsframework.messageconverter.fhir.convert.vmr.FhirEncounter2Vmr;
 import org.cdsframework.messageconverter.fhir.convert.vmr.FhirImmunization2Vmr;
 import org.cdsframework.messageconverter.fhir.convert.vmr.FhirObservation2Vmr;
 import org.cdsframework.messageconverter.fhir.convert.vmr.FhirPatient2Vmr;
-import org.cdsframework.messageconverter.fhir.convert.vmr.FhirProcedure2Vmr;
 import org.cdsframework.util.LogUtils;
 import org.opencds.vmr.v1_0.schema.CDSInput;
 
@@ -27,35 +25,59 @@ class Fhir2Vmr {
 
     static CDSInput getCdsInputFromFhir(String json) {
         final String METHODNAME = "getCdsInputFromFhir ";
+        logger.warn(METHODNAME, "json=", json);
         Gson gson = new Gson();
         JsonElement jsonElement = gson.fromJson(json, JsonElement.class);
         JsonObject jsonObject = jsonElement.getAsJsonObject();
 
         // get the patient id
-        JsonPrimitive patientIdObject = jsonObject.getAsJsonPrimitive("patient");
-        String patientId = patientIdObject.getAsString();
+        String patientId = null;
+
+        // get the patient id out of the context
+        JsonObject contextObject = VmrUtils.getJsonObject(jsonObject, "context");
+        if (contextObject != null) {
+            patientId = VmrUtils.getJsonObjectAsString(contextObject, "patientId");
+        } else {
+            logger.error(METHODNAME, "contextObject is null!!!");
+        }
+
+        // fall back and check for it in the patient node
+        if (patientId == null) {
+            patientId = VmrUtils.getJsonObjectAsString(jsonObject, "patient");
+            logger.warn(METHODNAME, "got patient id from patient node - not context!");
+        }
+
+        if (patientId == null) {
+            logger.error(METHODNAME, "patientId is null!!!");
+        }
+
         logger.warn(METHODNAME, "patientId=", patientId);
 
         // get the fhir server url
-        JsonPrimitive fhirServerObject = jsonObject.getAsJsonPrimitive("fhirServer");
-        String fhirServer = fhirServerObject.getAsString();
-        if (!fhirServer.endsWith("/")) {
-            fhirServer = fhirServer + "/";
+        String fhirServer = VmrUtils.getJsonObjectAsString(jsonObject, "fhirServer");
+        if (fhirServer != null) {
+            if (!fhirServer.endsWith("/")) {
+                fhirServer = fhirServer + "/";
+            }
+        } else {
+            logger.warn(METHODNAME, "fhirServer is null!");
         }
         logger.warn(METHODNAME, "fhirServer=", fhirServer);
 
         // get the fhir server access token
-        JsonObject fhirAuthorizationObject = jsonObject.getAsJsonObject("fhirAuthorization");
+        JsonObject fhirAuthorizationObject = VmrUtils.getJsonObject(jsonObject, "fhirAuthorization");
+
         String accessToken = null;
         if (fhirAuthorizationObject != null) {
-            JsonPrimitive accessTokenOnject = fhirAuthorizationObject.getAsJsonPrimitive("access_token");
-            accessToken = accessTokenOnject.getAsString();
+            accessToken = VmrUtils.getJsonObjectAsString(fhirAuthorizationObject, "access_token");
+        } else {
+            logger.warn(METHODNAME, "fhirAuthorizationObject is null!");
         }
         logger.warn(METHODNAME, "accessToken=", accessToken);
 
         // get the prefetch object
-        JsonObject prefetchObject = jsonObject.getAsJsonObject("prefetch");
-        logger.debug(METHODNAME, "prefetchObject=", prefetchObject);
+        JsonObject prefetchObject = VmrUtils.getJsonObject(jsonObject, "prefetch");
+        logger.warn(METHODNAME, "prefetchObject=", prefetchObject);
 
         CdsInputWrapper input = CdsInputWrapper.getCdsInputWrapper();
 

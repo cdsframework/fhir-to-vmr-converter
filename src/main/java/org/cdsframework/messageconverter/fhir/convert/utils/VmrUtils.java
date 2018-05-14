@@ -2,6 +2,7 @@ package org.cdsframework.messageconverter.fhir.convert.utils;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import java.security.SecureRandom;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
@@ -22,7 +23,6 @@ import javax.ws.rs.core.Response;
 import org.cdsframework.cds.util.CdsObjectFactory;
 import org.cdsframework.util.LogUtils;
 import org.cdsframework.util.support.cds.Config;
-import org.glassfish.jersey.client.ClientConfig;
 import org.hl7.fhir.dstu3.model.CodeableConcept;
 import org.hl7.fhir.dstu3.model.Coding;
 import org.opencds.vmr.v1_0.schema.CD;
@@ -57,6 +57,10 @@ public class VmrUtils {
         CODE_SYSTEM_MAP.put("http://loinc.org", "2.16.840.1.113883.6.1");
         CODE_SYSTEM_MAP.put("http://www2a.cdc.gov/vaccines/IIS/IISStandards/vaccines.asp?rpt=cvx", Config.getCodeSystemOid("VACCINE"));
         CODE_SYSTEM_MAP.put("http://hl7.org/fhir/sid/cvx", Config.getCodeSystemOid("VACCINE"));
+        CODE_SYSTEM_MAP.put("http://hl7.org/fhir/sid/icd-9-cm", "2.16.840.1.113883.6.103");
+        CODE_SYSTEM_MAP.put("http://hl7.org/fhir/sid/icd-10-cm", "2.16.840.1.113883.6.90");
+        CODE_SYSTEM_MAP.put("http://hl7.org/fhir/sid/icd-10-de", "2.16.840.1.113883.6.3.2");
+        CODE_SYSTEM_MAP.put("http://hl7.org/fhir/sid/icd-10-nl", "1.2.276.0.76.5.409");
         CODE_SYSTEM_MAP.put("http://snomed.info/sct", "2.16.840.1.113883.6.96");
         try {
             SSLContext sc = SSLContext.getInstance("TLS");
@@ -80,10 +84,10 @@ public class VmrUtils {
         cdsInput.getCdsContext().setCdsSystemUserType(systemUserType);
     }
 
-    public static JsonElement retrieveResource(Gson gson, String url, String accessToken) {
+    public static JsonObject retrieveResource(Gson gson, String url, String accessToken) {
         final String METHODNAME = "retrieveResource ";
         logger.warn(METHODNAME, "url=" + url);
-        JsonElement jsonElement = null;
+        JsonObject jsonObject = null;
 
         try {
             SSLContext sc = SSLContext.getInstance("TLS");
@@ -104,7 +108,10 @@ public class VmrUtils {
                 logger.debug(METHODNAME, "Success! status=" + response.getStatus());
                 String entity = response.readEntity(String.class);
                 logger.debug(METHODNAME, "entity=", entity);
-                jsonElement = gson.fromJson(entity, JsonElement.class);
+                JsonElement jsonELement = gson.fromJson(entity, JsonElement.class);
+                if (!jsonELement.isJsonNull()) {
+                    jsonObject = (JsonObject) jsonELement;
+                }
             } else {
                 logger.warn(METHODNAME, "ERROR! status=" + response.getStatus());
                 String entity = response.readEntity(String.class);
@@ -113,7 +120,7 @@ public class VmrUtils {
         } catch (Exception e) {
             logger.error(e);
         }
-        return jsonElement;
+        return jsonObject;
     }
 
     public static boolean isCategoryMatch(List<CodeableConcept> categories, String matchString) {
@@ -154,7 +161,40 @@ public class VmrUtils {
         return result;
     }
 
-    public static JsonElement getMissingData(Gson gson, String objectName, String patientId, String fhirServer, String accessToken) {
+    public static JsonObject getMissingData(Gson gson, String objectName, String patientId, String fhirServer, String accessToken) {
         return VmrUtils.retrieveResource(gson, fhirServer + objectName + "?patient=" + patientId, accessToken);
+    }
+
+    public static JsonObject getJsonObject(JsonObject parent, String node) {
+        JsonObject result = null;
+        if (parent.has(node)) {
+            JsonElement element = parent.get(node);
+            if (!(element.isJsonNull())) {
+                result = element.getAsJsonObject();
+            }
+        }
+        return result;
+    }
+
+    public static String getJsonObjectAsString(JsonObject parent, String node) {
+        String result = null;
+        if (parent.has(node)) {
+            JsonElement element = parent.get(node);
+            if (!(element.isJsonNull())) {
+                result = element.getAsString();
+            }
+        }
+        return result;
+    }
+
+    public static JsonObject getJsonObjectFromPrefetchOrServer(JsonObject prefetchObject, String objectString, Gson gson, String patientId, String fhirServer, String accessToken) {
+        JsonObject result = null;
+        if (prefetchObject != null) {
+            result = VmrUtils.getJsonObject(prefetchObject, objectString.toLowerCase());
+        }
+        if (result == null) {
+            result = VmrUtils.getMissingData(gson, objectString, patientId, fhirServer, accessToken);
+        }
+        return result;
     }
 }

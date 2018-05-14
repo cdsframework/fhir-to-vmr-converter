@@ -32,43 +32,38 @@ public class FhirImmunization2Vmr {
     public static void setImmunizationData(CdsInputWrapper input, JsonObject prefetchObject, Gson gson, String patientId, String fhirServer, String accessToken) {
         final String METHODNAME = "setImmunizationData ";
         IceCdsInputWrapper iceInput = new IceCdsInputWrapper(input);
-        JsonElement immunizationResourceElement = null;
-        boolean dataMissing = true;
-        if (prefetchObject != null && prefetchObject.getAsJsonObject("immunization") != null) {
-            dataMissing = false;
-            JsonObject immunizationElement = prefetchObject.getAsJsonObject("immunization");
-            immunizationResourceElement = immunizationElement.get("resource");
-        }
-        if (dataMissing) {
-            immunizationResourceElement = VmrUtils.getMissingData(gson, "Immunization", patientId, fhirServer, accessToken);
-        }
-        FhirContext ctx = FhirContext.forDstu3();
-        try {
-            org.hl7.fhir.dstu3.model.Bundle immunizations = (org.hl7.fhir.dstu3.model.Bundle) ctx.newJsonParser().parseResource(gson.toJson(immunizationResourceElement));
-            List<org.hl7.fhir.dstu3.model.Bundle.BundleEntryComponent> entry = immunizations.getEntry();
-            if (entry.isEmpty()) {
-                immunizationResourceElement = VmrUtils.getMissingData(gson, "Immunization", patientId, fhirServer, accessToken);
-                immunizations = (org.hl7.fhir.dstu3.model.Bundle) ctx.newJsonParser().parseResource(gson.toJson(immunizationResourceElement));
-                entry = immunizations.getEntry();
-            }
-//            logger.warn(METHODNAME, "immunizationResourceElement=", gson.toJson(immunizationResourceElement));
-            for (org.hl7.fhir.dstu3.model.Bundle.BundleEntryComponent item : entry) {
-                org.hl7.fhir.dstu3.model.Immunization immunization = (org.hl7.fhir.dstu3.model.Immunization) item.getResource();
-                setDstu3ImmunizationOnCdsInput(immunization, iceInput);
-            }
-        } catch (Exception e) {
-            logger.error(e);
-            ctx = FhirContext.forDstu2();
+        JsonObject immunizationObject = VmrUtils.getJsonObjectFromPrefetchOrServer(prefetchObject, "Immunization", gson, patientId, fhirServer, accessToken);
+        if (immunizationObject != null) {
+
+            FhirContext ctx = FhirContext.forDstu3();
             try {
-                ca.uhn.fhir.model.dstu2.resource.Bundle immunizations = (ca.uhn.fhir.model.dstu2.resource.Bundle) ctx.newJsonParser().parseResource(gson.toJson(immunizationResourceElement));
-                logger.debug(METHODNAME, "immunizations=", immunizations);
-                for (ca.uhn.fhir.model.dstu2.resource.Bundle.Entry item : immunizations.getEntry()) {
-                    ca.uhn.fhir.model.dstu2.resource.Immunization immunization = (ca.uhn.fhir.model.dstu2.resource.Immunization) item.getResource();
-                    setDstu2ImmunizationOnCdsInput(immunization, iceInput);
+                org.hl7.fhir.dstu3.model.Bundle immunizations = (org.hl7.fhir.dstu3.model.Bundle) ctx.newJsonParser().parseResource(gson.toJson(immunizationObject));
+                List<org.hl7.fhir.dstu3.model.Bundle.BundleEntryComponent> entry = immunizations.getEntry();
+                if (entry.isEmpty()) {
+                    immunizationObject = VmrUtils.getMissingData(gson, "Immunization", patientId, fhirServer, accessToken);
+                    immunizations = (org.hl7.fhir.dstu3.model.Bundle) ctx.newJsonParser().parseResource(gson.toJson(immunizationObject));
+                    entry = immunizations.getEntry();
                 }
-            } catch (Exception ex) {
-                logger.error(ex);
+                for (org.hl7.fhir.dstu3.model.Bundle.BundleEntryComponent item : entry) {
+                    org.hl7.fhir.dstu3.model.Immunization immunization = (org.hl7.fhir.dstu3.model.Immunization) item.getResource();
+                    setDstu3ImmunizationOnCdsInput(immunization, iceInput);
+                }
+            } catch (Exception e) {
+                logger.error(e);
+                ctx = FhirContext.forDstu2();
+                try {
+                    ca.uhn.fhir.model.dstu2.resource.Bundle immunizations = (ca.uhn.fhir.model.dstu2.resource.Bundle) ctx.newJsonParser().parseResource(gson.toJson(immunizationObject));
+                    logger.debug(METHODNAME, "immunizations=", immunizations);
+                    for (ca.uhn.fhir.model.dstu2.resource.Bundle.Entry item : immunizations.getEntry()) {
+                        ca.uhn.fhir.model.dstu2.resource.Immunization immunization = (ca.uhn.fhir.model.dstu2.resource.Immunization) item.getResource();
+                        setDstu2ImmunizationOnCdsInput(immunization, iceInput);
+                    }
+                } catch (Exception ex) {
+                    logger.error(ex);
+                }
             }
+        } else {
+            logger.error(METHODNAME, "immunizationObject was null!!!");
         }
     }
 

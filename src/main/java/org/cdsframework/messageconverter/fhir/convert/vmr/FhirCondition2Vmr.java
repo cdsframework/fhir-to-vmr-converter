@@ -24,43 +24,39 @@ public class FhirCondition2Vmr {
 
     public static void setConditionData(CdsInputWrapper input, JsonObject prefetchObject, Gson gson, String patientId, String fhirServer, String accessToken) {
         final String METHODNAME = "setConditionData ";
-        JsonElement conditionResourceElement = null;
-        boolean dataMissing = true;
-        if (prefetchObject != null && prefetchObject.getAsJsonObject("condition") != null) {
-            dataMissing = false;
-            JsonObject conditionElement = prefetchObject.getAsJsonObject("condition");
-            conditionResourceElement = conditionElement.get("resource");
-        }
-        if (dataMissing) {
-            conditionResourceElement = VmrUtils.getMissingData(gson, "Condition", patientId, fhirServer, accessToken);
-        }
-        FhirContext ctx = FhirContext.forDstu3();
-        try {
-            org.hl7.fhir.dstu3.model.Bundle conditions = (org.hl7.fhir.dstu3.model.Bundle) ctx.newJsonParser().parseResource(gson.toJson(conditionResourceElement));
-            List<org.hl7.fhir.dstu3.model.Bundle.BundleEntryComponent> entry = conditions.getEntry();
-            if (entry.isEmpty()) {
-                conditionResourceElement = VmrUtils.getMissingData(gson, "Condition", patientId, fhirServer, accessToken);
-                conditions = (org.hl7.fhir.dstu3.model.Bundle) ctx.newJsonParser().parseResource(gson.toJson(conditionResourceElement));
-                entry = conditions.getEntry();
-            }
-//            logger.warn(METHODNAME, "conditionResourceElement=", gson.toJson(conditionResourceElement));
-            for (org.hl7.fhir.dstu3.model.Bundle.BundleEntryComponent item : entry) {
-                org.hl7.fhir.dstu3.model.Condition condition = (org.hl7.fhir.dstu3.model.Condition) item.getResource();
-                setDstu3ConditionOnCdsInput(condition, input);
-            }
-        } catch (Exception e) {
-            logger.error(e);
-            ctx = FhirContext.forDstu2();
+        JsonObject conditionObject = VmrUtils.getJsonObjectFromPrefetchOrServer(prefetchObject, "Condition", gson, patientId, fhirServer, accessToken);
+
+        if (conditionObject != null) {
+            FhirContext ctx = FhirContext.forDstu3();
             try {
-                ca.uhn.fhir.model.dstu2.resource.Bundle conditions = (ca.uhn.fhir.model.dstu2.resource.Bundle) ctx.newJsonParser().parseResource(gson.toJson(conditionResourceElement));
-                logger.debug(METHODNAME, "conditions=", conditions);
-                for (ca.uhn.fhir.model.dstu2.resource.Bundle.Entry item : conditions.getEntry()) {
-                    ca.uhn.fhir.model.dstu2.resource.Condition condition = (ca.uhn.fhir.model.dstu2.resource.Condition) item.getResource();
-                    setDstu2ConditionOnCdsInput(condition, input);
+                org.hl7.fhir.dstu3.model.Bundle conditions = (org.hl7.fhir.dstu3.model.Bundle) ctx.newJsonParser().parseResource(gson.toJson(conditionObject));
+                List<org.hl7.fhir.dstu3.model.Bundle.BundleEntryComponent> entry = conditions.getEntry();
+                if (entry.isEmpty()) {
+                    conditionObject = VmrUtils.getMissingData(gson, "Condition", patientId, fhirServer, accessToken);
+                    conditions = (org.hl7.fhir.dstu3.model.Bundle) ctx.newJsonParser().parseResource(gson.toJson(conditionObject));
+                    entry = conditions.getEntry();
                 }
-            } catch (Exception ex) {
-                logger.error(ex);
+//            logger.warn(METHODNAME, "conditionResourceElement=", gson.toJson(conditionResourceElement));
+                for (org.hl7.fhir.dstu3.model.Bundle.BundleEntryComponent item : entry) {
+                    org.hl7.fhir.dstu3.model.Condition condition = (org.hl7.fhir.dstu3.model.Condition) item.getResource();
+                    setDstu3ConditionOnCdsInput(condition, input);
+                }
+            } catch (Exception e) {
+                logger.error(e);
+                ctx = FhirContext.forDstu2();
+                try {
+                    ca.uhn.fhir.model.dstu2.resource.Bundle conditions = (ca.uhn.fhir.model.dstu2.resource.Bundle) ctx.newJsonParser().parseResource(gson.toJson(conditionObject));
+                    logger.debug(METHODNAME, "conditions=", conditions);
+                    for (ca.uhn.fhir.model.dstu2.resource.Bundle.Entry item : conditions.getEntry()) {
+                        ca.uhn.fhir.model.dstu2.resource.Condition condition = (ca.uhn.fhir.model.dstu2.resource.Condition) item.getResource();
+                        setDstu2ConditionOnCdsInput(condition, input);
+                    }
+                } catch (Exception ex) {
+                    logger.error(ex);
+                }
             }
+        } else {
+            logger.error(METHODNAME, "conditionObject is null!");
         }
     }
 
