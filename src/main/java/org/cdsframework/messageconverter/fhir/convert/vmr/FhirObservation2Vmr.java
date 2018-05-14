@@ -21,45 +21,38 @@ public class FhirObservation2Vmr {
 
     public static void setObservationData(CdsInputWrapper input, JsonObject prefetchObject, Gson gson, String patientId, String fhirServer, String accessToken) {
         final String METHODNAME = "setObservationData ";
-        JsonElement observationResourceElement = null;
-        boolean dataMissing = true;
-        if (prefetchObject != null && prefetchObject.has("observation")) {
-            JsonObject observationElement = prefetchObject.getAsJsonObject("observation");
-            if (observationElement != null) {
-                observationResourceElement = observationElement.get("resource");
-                dataMissing = false;
-            }
-        }
-        if (dataMissing) {
-            observationResourceElement = VmrUtils.getMissingData(gson, "Observation", patientId, fhirServer, accessToken);
-        }
-        FhirContext ctx = FhirContext.forDstu3();
-        try {
-            org.hl7.fhir.dstu3.model.Bundle observations = (org.hl7.fhir.dstu3.model.Bundle) ctx.newJsonParser().parseResource(gson.toJson(observationResourceElement));
-            List<org.hl7.fhir.dstu3.model.Bundle.BundleEntryComponent> entry = observations.getEntry();
-            if (entry.isEmpty()) {
-                observationResourceElement = VmrUtils.getMissingData(gson, "Observation", patientId, fhirServer, accessToken);
-                observations = (org.hl7.fhir.dstu3.model.Bundle) ctx.newJsonParser().parseResource(gson.toJson(observationResourceElement));
-                entry = observations.getEntry();
-            }
-//            logger.warn(METHODNAME, "observationResourceElement=", gson.toJson(observationResourceElement));
-            for (org.hl7.fhir.dstu3.model.Bundle.BundleEntryComponent item : entry) {
-                org.hl7.fhir.dstu3.model.Observation observation = (org.hl7.fhir.dstu3.model.Observation) item.getResource();
-                setDstu3ObservationOnCdsInput(observation, input);
-            }
-        } catch (Exception e) {
-            logger.error(e);
-            ctx = FhirContext.forDstu2();
+        JsonObject observationObject = VmrUtils.getJsonObjectFromPrefetchOrServer(prefetchObject, "Observation", gson, patientId, fhirServer, accessToken);
+        if (observationObject != null) {
+            FhirContext ctx = FhirContext.forDstu3();
             try {
-                ca.uhn.fhir.model.dstu2.resource.Bundle observations = (ca.uhn.fhir.model.dstu2.resource.Bundle) ctx.newJsonParser().parseResource(gson.toJson(observationResourceElement));
-                logger.debug(METHODNAME, "observations=", observations);
-                for (ca.uhn.fhir.model.dstu2.resource.Bundle.Entry item : observations.getEntry()) {
-                    ca.uhn.fhir.model.dstu2.resource.Observation observation = (ca.uhn.fhir.model.dstu2.resource.Observation) item.getResource();
-                    setDstu2ObservationOnCdsInput(observation, input);
+                org.hl7.fhir.dstu3.model.Bundle observations = (org.hl7.fhir.dstu3.model.Bundle) ctx.newJsonParser().parseResource(gson.toJson(observationObject));
+                List<org.hl7.fhir.dstu3.model.Bundle.BundleEntryComponent> entry = observations.getEntry();
+                if (entry.isEmpty()) {
+                    observationObject = VmrUtils.getMissingData(gson, "Observation", patientId, fhirServer, accessToken);
+                    observations = (org.hl7.fhir.dstu3.model.Bundle) ctx.newJsonParser().parseResource(gson.toJson(observationObject));
+                    entry = observations.getEntry();
                 }
-            } catch (Exception ex) {
-                logger.error(ex);
+//            logger.warn(METHODNAME, "observationResourceElement=", gson.toJson(observationResourceElement));
+                for (org.hl7.fhir.dstu3.model.Bundle.BundleEntryComponent item : entry) {
+                    org.hl7.fhir.dstu3.model.Observation observation = (org.hl7.fhir.dstu3.model.Observation) item.getResource();
+                    setDstu3ObservationOnCdsInput(observation, input);
+                }
+            } catch (Exception e) {
+                logger.error(e);
+                ctx = FhirContext.forDstu2();
+                try {
+                    ca.uhn.fhir.model.dstu2.resource.Bundle observations = (ca.uhn.fhir.model.dstu2.resource.Bundle) ctx.newJsonParser().parseResource(gson.toJson(observationObject));
+                    logger.debug(METHODNAME, "observations=", observations);
+                    for (ca.uhn.fhir.model.dstu2.resource.Bundle.Entry item : observations.getEntry()) {
+                        ca.uhn.fhir.model.dstu2.resource.Observation observation = (ca.uhn.fhir.model.dstu2.resource.Observation) item.getResource();
+                        setDstu2ObservationOnCdsInput(observation, input);
+                    }
+                } catch (Exception ex) {
+                    logger.error(ex);
+                }
             }
+        } else {
+            logger.error(METHODNAME, "observationObject is null!!!");
         }
 
         // add phony zika result for demonstrative purposes
