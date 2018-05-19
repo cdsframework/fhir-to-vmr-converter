@@ -3,6 +3,9 @@ package org.cdsframework.messageconverter.fhir.convert.utils;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonSyntaxException;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
@@ -35,7 +38,7 @@ import org.opencds.vmr.v1_0.schema.CDSInput;
 public class VmrUtils {
 
     private static final LogUtils logger = LogUtils.getLogger(VmrUtils.class);
-    private static final Map<String, String> CODE_SYSTEM_MAP = new HashMap<>();
+    public static final Map<String, String> CODE_SYSTEM_MAP = new HashMap<>();
     private static final TrustManager[] TRUST_ALL_CERTS = new TrustManager[]{new X509TrustManager() {
 
         @Override
@@ -66,13 +69,15 @@ public class VmrUtils {
             SSLContext sc = SSLContext.getInstance("TLS");
             sc.init(null, TRUST_ALL_CERTS, new SecureRandom());
             HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
-        } catch (Exception e) {
+        } catch (KeyManagementException | NoSuchAlgorithmException e) {
             logger.error(e);
         }
     }
 
-    public static void setSystemUserType(CDSInput cdsInput) {
+    public static void setSystemUserType(CDSInput cdsInput, JsonElement jsonElement, List<String> errorList) {
 
+        // TODO: derrive this from thefhir obect itself.
+        errorList.add("warning: system user type not derrived from payload.");
         cdsInput.getTemplateId().clear();
         cdsInput.getTemplateId().add(CdsObjectFactory.getII(FhirConstants.CDSINPUT_TEMPLATE_ID));
 
@@ -117,7 +122,7 @@ public class VmrUtils {
                 String entity = response.readEntity(String.class);
                 logger.warn(METHODNAME, "entity=", entity);
             }
-        } catch (Exception e) {
+        } catch (JsonSyntaxException | KeyManagementException | NoSuchAlgorithmException e) {
             logger.error(e);
         }
         return jsonObject;
@@ -194,6 +199,26 @@ public class VmrUtils {
         }
         if (result == null) {
             result = VmrUtils.getMissingData(gson, objectString, patientId, fhirServer, accessToken);
+        }
+        return result;
+    }
+
+    public static String getDateString(org.hl7.fhir.dstu3.model.DateTimeType dateTimeType) {
+        final String METHODNAME = "DSTU3 getDateString ";
+        String result = null;
+        if (dateTimeType != null) {
+            String valueAsString = dateTimeType.getValueAsString();
+            if (valueAsString != null) {
+                if (valueAsString.length() >= 10) {
+                    result = valueAsString.substring(0, 10).replace("-", "");
+                } else {
+                    logger.warn(METHODNAME, "valueAsString has bad value: ", valueAsString);
+                }
+            } else {
+                logger.warn(METHODNAME, "valueAsString was null!");
+            }
+        } else {
+            logger.warn(METHODNAME, "dateTimeType was null!");
         }
         return result;
     }

@@ -1,10 +1,12 @@
 package org.cdsframework.messageconverter.fhir.convert.vmr;
 
+import ca.uhn.fhir.context.ConfigurationException;
 import ca.uhn.fhir.context.FhirContext;
+import ca.uhn.fhir.parser.DataFormatException;
 import com.google.gson.Gson;
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import java.util.Date;
+import java.util.List;
 import org.cdsframework.cds.vmr.CdsInputWrapper;
 import org.cdsframework.messageconverter.fhir.convert.utils.FhirConstants;
 import org.cdsframework.messageconverter.fhir.convert.utils.VmrUtils;
@@ -18,7 +20,7 @@ public class FhirPatient2Vmr {
 
     private static final LogUtils logger = LogUtils.getLogger(FhirPatient2Vmr.class);
 
-    public static void setPatientData(CdsInputWrapper input, JsonObject prefetchObject, Gson gson, String patientId, String fhirServer, String accessToken) {
+    public static void setPatientData(CdsInputWrapper input, JsonObject prefetchObject, Gson gson, String patientId, String fhirServer, String accessToken, List<String> errorList) {
         final String METHODNAME = "setPatientData ";
         JsonObject patientObject = null;
         if (prefetchObject != null) {
@@ -40,7 +42,9 @@ public class FhirPatient2Vmr {
 
         if (patientObject == null) {
             patientObject = VmrUtils.retrieveResource(gson, fhirServer + "Patient/" + patientId, accessToken);
-            logger.info(METHODNAME, "patientObject=", gson.toJson(patientObject));
+            if (logger.isDebugEnabled()) {
+                logger.debug(METHODNAME, "patientObject=", gson.toJson(patientObject));
+            }
         }
         if (patientObject != null) {
 
@@ -60,7 +64,7 @@ public class FhirPatient2Vmr {
                     }
                 }
                 logger.debug(METHODNAME, "patient=", patient);
-            } catch (Exception e) {
+            } catch (ConfigurationException | DataFormatException e) {
                 logger.error(e);
                 ctx = FhirContext.forDstu2();
                 ca.uhn.fhir.model.dstu2.resource.Patient patient = (ca.uhn.fhir.model.dstu2.resource.Patient) ctx.newJsonParser().parseResource(gson.toJson(patientObject));
@@ -79,7 +83,7 @@ public class FhirPatient2Vmr {
                 logger.debug(METHODNAME, "patient=", patient);
             }
         } else {
-            logger.error(METHODNAME, "patientObject is null!!!");
+            errorList.add(logger.error(METHODNAME, "patientObject is null!!!"));
         }
     }
 }
