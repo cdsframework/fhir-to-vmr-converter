@@ -1,8 +1,9 @@
 package org.cdsframework.messageconverter.fhir.convert.vmr;
 
+import ca.uhn.fhir.context.ConfigurationException;
 import ca.uhn.fhir.context.FhirContext;
+import ca.uhn.fhir.parser.DataFormatException;
 import com.google.gson.Gson;
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import java.util.List;
 import org.cdsframework.cds.vmr.CdsInputWrapper;
@@ -19,7 +20,7 @@ public class FhirObservation2Vmr {
 
     private static final LogUtils logger = LogUtils.getLogger(FhirObservation2Vmr.class);
 
-    public static void setObservationData(CdsInputWrapper input, JsonObject prefetchObject, Gson gson, String patientId, String fhirServer, String accessToken) {
+    public static void setObservationData(CdsInputWrapper input, JsonObject prefetchObject, Gson gson, String patientId, String fhirServer, String accessToken, List<String> errorList) {
         final String METHODNAME = "setObservationData ";
         JsonObject observationObject = VmrUtils.getJsonObjectFromPrefetchOrServer(prefetchObject, "Observation", gson, patientId, fhirServer, accessToken);
         if (observationObject != null) {
@@ -37,18 +38,18 @@ public class FhirObservation2Vmr {
                     org.hl7.fhir.dstu3.model.Observation observation = (org.hl7.fhir.dstu3.model.Observation) item.getResource();
                     setDstu3ObservationOnCdsInput(observation, input);
                 }
-            } catch (Exception e) {
+            } catch (ConfigurationException | DataFormatException | FHIRException e) {
                 logger.error(e);
                 ctx = FhirContext.forDstu2();
                 try {
                     ca.uhn.fhir.model.dstu2.resource.Bundle observations = (ca.uhn.fhir.model.dstu2.resource.Bundle) ctx.newJsonParser().parseResource(gson.toJson(observationObject));
                     logger.debug(METHODNAME, "observations=", observations);
-                    for (ca.uhn.fhir.model.dstu2.resource.Bundle.Entry item : observations.getEntry()) {
-                        ca.uhn.fhir.model.dstu2.resource.Observation observation = (ca.uhn.fhir.model.dstu2.resource.Observation) item.getResource();
+                    observations.getEntry().stream().map((item) -> (ca.uhn.fhir.model.dstu2.resource.Observation) item.getResource()).forEachOrdered((observation) -> {
                         setDstu2ObservationOnCdsInput(observation, input);
-                    }
-                } catch (Exception ex) {
+                    });
+                } catch (ConfigurationException | DataFormatException ex) {
                     logger.error(ex);
+                    errorList.add(ex.getMessage());
                 }
             }
         } else {
@@ -78,12 +79,14 @@ public class FhirObservation2Vmr {
     private static void setDstu3ObservationOnCdsInput(org.hl7.fhir.dstu3.model.Observation observation, CdsInputWrapper input) throws FHIRException {
         final String METHODNAME = "setDstu3ObservationOnCdsInput ";
         if (observation != null) {
-            logger.warn(METHODNAME, "observation.hasExtension()=", observation.hasExtension());
-            logger.warn(METHODNAME, "observation.hasId()=", observation.hasId());
-            logger.warn(METHODNAME, "observation.hasEffectiveDateTimeType()=", observation.hasEffectiveDateTimeType());
-            logger.warn(METHODNAME, "observation.hasCode()=", observation.hasCode());
-            logger.warn(METHODNAME, "observation.hasValueCodeableConcept()=", observation.hasValueCodeableConcept());
-            logger.warn(METHODNAME, "observation.hasComponent()=", observation.hasComponent());
+            if (logger.isDebugEnabled()) {
+                logger.debug(METHODNAME, "observation.hasExtension()=", observation.hasExtension());
+                logger.debug(METHODNAME, "observation.hasId()=", observation.hasId());
+                logger.debug(METHODNAME, "observation.hasEffectiveDateTimeType()=", observation.hasEffectiveDateTimeType());
+                logger.debug(METHODNAME, "observation.hasCode()=", observation.hasCode());
+                logger.debug(METHODNAME, "observation.hasValueCodeableConcept()=", observation.hasValueCodeableConcept());
+                logger.debug(METHODNAME, "observation.hasComponent()=", observation.hasComponent());
+            }
         }
         if (observation != null
                 && !observation.hasExtension()
@@ -96,17 +99,8 @@ public class FhirObservation2Vmr {
             String id = observation.getId();
 
             // effective date
-            org.hl7.fhir.dstu3.model.DateTimeType effectiveDateTimeType = observation.getEffectiveDateTimeType();
-            Integer year = effectiveDateTimeType.getYear();
-            Integer month = effectiveDateTimeType.getMonth();
-            Integer day = effectiveDateTimeType.getDay();
-            String valueAsString = effectiveDateTimeType.getValueAsString();
-            logger.warn(METHODNAME, "year=", year);
-            logger.warn(METHODNAME, "month=", month);
-            logger.warn(METHODNAME, "day=", day);
-            logger.warn(METHODNAME, "valueAsString=", valueAsString);
-            logger.warn(METHODNAME, "valueAsString=", valueAsString.substring(0, 10).replace("-", ""));
-            String effectiveDate = valueAsString.substring(0, 10).replace("-", "");
+            String effectiveDate = VmrUtils.getDateString(observation.getEffectiveDateTimeType());
+            logger.debug(METHODNAME, "effectiveDate=", effectiveDate);
 
             if (observation.hasCode() && observation.hasValueCodeableConcept()) {
 
