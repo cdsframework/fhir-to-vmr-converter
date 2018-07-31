@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.cdsframework.messageconverter</groupId>
     <artifactId>fhir-to-vmr-converter</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>1.0.0</version>
     <packaging>jar</packaging>
 
     <properties>
@@ -16,7 +16,7 @@
         <dependency>
             <groupId>org.cdsframework</groupId>
             <artifactId>cdsframework-support-client</artifactId>
-            <version>1.0.10</version>
+            <version>1.0.11</version>
         </dependency>
         <dependency>
             <groupId>org.cdsframework</groupId>
