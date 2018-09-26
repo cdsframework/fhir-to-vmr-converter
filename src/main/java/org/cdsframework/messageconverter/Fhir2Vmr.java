@@ -19,7 +19,7 @@ import org.opencds.vmr.v1_0.schema.CDSInput;
  *
  * @author sdn
  */
-class Fhir2Vmr {
+public class Fhir2Vmr {
 
     private static final LogUtils logger = LogUtils.getLogger(Fhir2Vmr.class);
     private final List<String> errorList = new ArrayList<>();
