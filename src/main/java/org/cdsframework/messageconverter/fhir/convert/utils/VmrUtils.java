@@ -167,7 +167,7 @@ public class VmrUtils {
     }
 
     public static JsonObject getMissingData(Gson gson, String objectName, String patientId, String fhirServer, String accessToken) {
-        return VmrUtils.retrieveResource(gson, fhirServer + objectName + "?patient=" + patientId, accessToken);
+        return VmrUtils.retrieveResource(gson, fhirServer + objectName + "?patient=" + patientId + "&_count=1000", accessToken);
     }
 
     public static JsonObject getJsonObject(JsonObject parent, String node) {

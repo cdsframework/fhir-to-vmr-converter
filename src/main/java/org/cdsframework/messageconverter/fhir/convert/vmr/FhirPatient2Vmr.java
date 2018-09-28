@@ -11,6 +11,8 @@ import org.cdsframework.cds.vmr.CdsInputWrapper;
 import org.cdsframework.messageconverter.fhir.convert.utils.FhirConstants;
 import org.cdsframework.messageconverter.fhir.convert.utils.VmrUtils;
 import org.cdsframework.util.LogUtils;
+import org.hl7.fhir.dstu3.model.HumanName;
+import org.hl7.fhir.dstu3.model.StringType;
 
 /**
  *
@@ -22,6 +24,7 @@ public class FhirPatient2Vmr {
 
     public static void setPatientData(CdsInputWrapper input, JsonObject prefetchObject, Gson gson, String patientId, String fhirServer, String accessToken, List<String> errorList) {
         final String METHODNAME = "setPatientData ";
+        input.setPatientId(patientId);
         JsonObject patientObject = null;
         if (prefetchObject != null) {
             JsonObject patientNodeObject = VmrUtils.getJsonObject(prefetchObject, "patient");
@@ -54,6 +57,12 @@ public class FhirPatient2Vmr {
                 if (patient != null) {
                     Date birthDate = patient.getBirthDate();
                     org.hl7.fhir.dstu3.model.Enumerations.AdministrativeGender gender = patient.getGender();
+                    HumanName humanName = patient.getNameFirstRep();
+                    List<StringType> givenNames = humanName.getGiven();
+                    StringType givenName = givenNames.get(0);
+                    String familyName = humanName.getFamily();
+                    logger.info(METHODNAME, "givenName=", givenName);
+                    logger.info(METHODNAME, "familyName=", familyName);
                     logger.debug(METHODNAME, "birthDate=", birthDate);
                     logger.debug(METHODNAME, "gender=", gender);
                     if (patient.getGender() != null) {
@@ -62,6 +71,7 @@ public class FhirPatient2Vmr {
                     if (patient.getBirthDate() != null) {
                         input.setPatientBirthTime(patient.getBirthDate());
                     }
+                    input.setPatientName(givenName.asStringValue(), familyName);
                 }
                 logger.debug(METHODNAME, "patient=", patient);
             } catch (ConfigurationException | DataFormatException e) {
