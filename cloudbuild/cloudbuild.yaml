@@ -13,7 +13,7 @@ steps:
     path: /root/.m2
 - name: 'maven:3.6.1-jdk-8'
   entrypoint: 'mvn'
-  args: ['clean', 'deploy', '-DaltDeploymentRepository=support.hln.com-snapshots::default::https://support.hln.com/artifactory/libs-snapshot-local']
+  args: ['clean', 'deploy', '-DaltDeploymentRepository=support.hln.com-snapshots::default::https://support.hln.com/artifactory/libs-release-local']
   dir: '.'
   volumes:
   - name: 'm2'
