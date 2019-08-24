@@ -1,0 +1,20 @@
+steps:
+- name: 'gcr.io/cloud-builders/gcloud'
+  args:
+  - kms
+  - decrypt
+  - --ciphertext-file=cloudbuild/settings.enc
+  - --plaintext-file=/root/.m2/settings.xml
+  - --location=global
+  - --keyring=rckms-cloud-build
+  - --key=github
+  volumes:
+  - name: 'm2'
+    path: /root/.m2
+- name: 'maven:3.6.1-jdk-8'
+  entrypoint: 'mvn'
+  args: ['clean', 'deploy', '-DaltDeploymentRepository=support.hln.com-snapshots::default::https://support.hln.com/artifactory/libs-snapshot-local']
+  dir: '.'
+  volumes:
+  - name: 'm2'
+    path: /root/.m2
