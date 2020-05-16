@@ -1,0 +1,122 @@
+{
+    "resourceType": "Parameters",
+    "id": "parameters-in-example",
+    "parameter": [
+        {
+            "name": "assessmentDate",
+            "valueDate": "2019-06-27"
+        },
+        {
+            "name": "patient",
+            "resource": {
+                "resourceType": "Patient",
+                "id": "smart-1032702",
+                "meta": {
+                    "versionId": "1",
+                    "lastUpdated": "2018-05-15T20:47:20.685+00:00",
+                    "tag": [
+                        {
+                            "system": "https://smarthealthit.org/tags",
+                            "code": "smart-7-2017"
+                        }
+                    ]
+                },
+                "text": {
+                    "status": "generated",
+                    "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\">Amy Shaw</div>"
+                },
+                "identifier": [
+                    {
+                        "use": "official",
+                        "type": {
+                            "coding": [
+                                {
+                                    "system": "http://hl7.org/fhir/v2/0203",
+                                    "code": "MR",
+                                    "display": "Medical Record Number"
+                                }
+                            ],
+                            "text": "Medical Record Number"
+                        },
+                        "system": "http://hospital.smarthealthit.org",
+                        "value": "smart-1032702"
+                    }
+                ],
+                "active": true,
+                "name": [
+                    {
+                        "use": "official",
+                        "family": "Shaw",
+                        "given": ["Amy", "V"]
+                    }
+                ],
+                "telecom": [
+                    {
+                        "system": "phone",
+                        "value": "800-782-6765",
+                        "use": "mobile"
+                    },
+                    {
+                        "system": "email",
+                        "value": "amy.shaw@example.com"
+                    }
+                ],
+                "gender": "female",
+                "birthDate": "2007-03-20",
+                "address": [
+                    {
+                        "use": "home",
+                        "line": ["49 Meadow St"],
+                        "city": "Mounds",
+                        "state": "OK",
+                        "postalCode": "74047",
+                        "country": "USA"
+                    }
+                ],
+                "generalPractitioner": [
+                    {
+                        "reference": "Practitioner/smart-Practitioner-72004454"
+                    }
+                ]
+            }
+        },
+        {
+            "name": "immunization",
+            "resource": {
+                "resourceType": "Immunization",
+                "id": "smart-Immunization-2",
+                "meta": {
+                    "versionId": "1",
+                    "lastUpdated": "2018-05-15T20:47:20.685+00:00",
+                    "tag": [
+                        {
+                            "system": "https://smarthealthit.org/tags",
+                            "code": "smart-7-2017"
+                        }
+                    ]
+                },
+                "text": {
+                    "status": "generated",
+                    "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\">poliovirus vaccine, unspecified formulation</div>"
+                },
+                "status": "completed",
+                "notGiven": false,
+                "vaccineCode": {
+                    "coding": [
+                        {
+                            "system": "http://www2a.cdc.gov/vaccines/IIS/IISStandards/vaccines.asp?rpt=cvx",
+                            "code": "89",
+                            "display": "poliovirus vaccine, unspecified formulation"
+                        }
+                    ],
+                    "text": "poliovirus vaccine, unspecified formulation"
+                },
+                "patient": {
+                    "reference": "Patient/smart-1032702"
+                },
+                "date": "2011-01-27",
+                "primarySource": true
+            }
+        }
+    ]
+  }
