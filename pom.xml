@@ -13,6 +13,19 @@
     </properties>
 
     <dependencies>
+
+        <dependency>
+            <groupId>org.json</groupId>
+            <artifactId>json</artifactId>
+            <version>20190722</version>
+        </dependency>
+
+        <dependency>
+            <groupId>ca.uhn.hapi.fhir</groupId>
+            <artifactId>hapi-fhir-structures-r4</artifactId>
+            <version>5.0.0</version>
+        </dependency>
+
         <dependency>
             <groupId>org.cdsframework</groupId>
             <artifactId>cdsframework-support-ice</artifactId>
@@ -49,7 +62,7 @@
         </dependency>
     </dependencies>
 
-    <repositories>
+    <repositories>        
         <repository>
             <id>support.hln.com-snapshots</id>
             <name>support.hln.com-snapshots</name>
