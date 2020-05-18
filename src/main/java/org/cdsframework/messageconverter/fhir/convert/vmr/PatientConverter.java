@@ -5,6 +5,7 @@ import java.util.List;
 import com.google.gson.JsonObject;
 
 import org.cdsframework.cds.vmr.CdsInputWrapper;
+import org.cdsframework.ice.input.IceCdsInputWrapper;
 import org.cdsframework.messageconverter.fhir.convert.utils.FhirConstants;
 import org.hl7.fhir.r4.model.HumanName;
 import org.hl7.fhir.r4.model.Patient;
@@ -15,9 +16,28 @@ import ca.uhn.fhir.parser.IParser;
 import ca.uhn.fhir.parser.StrictErrorHandler;
 
 /**
- * @author sdn
+ * @author Brian Lamb
  */
 public class PatientConverter implements FhirConverter {
+    /**
+     * Convert a json object of fhir data to cds format. Save the results to the ice cds input wrapper.
+     * 
+     * @param IceCdsInputWrapper wrapper : wrapper object, used to store patient data
+     * @param JsonObject data : a json object of fhir data
+     * @return IceCdsInputWrapper object updated with fhir data
+     */
+    public IceCdsInputWrapper convertToCds(IceCdsInputWrapper wrapper, JsonObject data) {
+        this.convertToCds(wrapper.getCdsInputWrapper(), data);
+        return wrapper;
+    }
+
+    /**
+     * Convert a json object of fhir data to cds format. Save the results to the cds input wrapper.
+     * 
+     * @param CdsInputWrapper wrapper : wrapper object, used to store patient data
+     * @param JsonObject data : a json object of fhir data
+     * @return CdsInputWrapper object updated with fhir data
+     */
     public CdsInputWrapper convertToCds(CdsInputWrapper wrapper, JsonObject data) {
         Patient patient = this.convertToFhir(data);
 
@@ -40,6 +60,13 @@ public class PatientConverter implements FhirConverter {
         return wrapper;
     }
 
+    /**
+     * To make parsing the patient data easier, convert to a patient object to easily get
+     * the data out.
+     * 
+     * @param JsonObject data : the patient fhir data
+     * @return a patient object populated via the fhir data
+     */
     public Patient convertToFhir(JsonObject data) {
         FhirContext ctx = FhirContext.forR4();
 

@@ -1,22 +1,22 @@
 package org.cdsframework.messageconverter.fhir.convert.vmr;
 
-import ca.uhn.fhir.parser.DataFormatException;
-
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+
 import org.cdsframework.cds.vmr.CdsInputWrapper;
-
+import org.cdsframework.ice.input.IceCdsInputWrapper;
 import org.hl7.fhir.r4.model.Patient;
-
 import org.junit.Before;
 import org.junit.Test;
 
-import static org.junit.Assert.*;
-
+import ca.uhn.fhir.parser.DataFormatException;
 
 /**
  * @author Brian Lamb
@@ -64,6 +64,18 @@ public class PatientConverterTest {
         assertEquals(this.wrapper.getPatientBirthTime(), "20070320");
         assertEquals(this.wrapper.getPatientFamilyName(), "Shaw");
         assertEquals(this.wrapper.getPatientGivenName(), "Amy");
+    }
+
+    @Test
+    public void iceConvertToCdsSetsDataCorrectly() {
+        IceCdsInputWrapper wrapper = new IceCdsInputWrapper(this.wrapper);
+        wrapper = this.patientConverter.convertToCds(wrapper, this.patient);
+
+        assertEquals(wrapper.getCdsInputWrapper().getPatientId(), "Patient/smart-1032702/_history/1");
+        assertEquals(wrapper.getCdsInputWrapper().getPatientGender(), "female");
+        assertEquals(wrapper.getCdsInputWrapper().getPatientBirthTime(), "20070320");
+        assertEquals(wrapper.getCdsInputWrapper().getPatientFamilyName(), "Shaw");
+        assertEquals(wrapper.getCdsInputWrapper().getPatientGivenName(), "Amy");        
     }
 
     @Test
