@@ -8,9 +8,9 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
 import org.cdsframework.cds.vmr.CdsInputWrapper;
+import org.cdsframework.ice.input.IceCdsInputWrapper;
 import org.cdsframework.messageconverter.fhir.convert.vmr.PatientConverter;
 import org.cdsframework.util.LogUtils;
-import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.XML;
 import org.opencds.vmr.v1_0.schema.CDSInput;
@@ -19,29 +19,20 @@ import org.opencds.vmr.v1_0.schema.CDSInput;
  * @author sdn
  */
 public class Fhir2Vmr {
-
     private static final LogUtils logger = LogUtils.getLogger(Fhir2Vmr.class);
     private final List<String> errorList = new ArrayList<>();
-    private final JsonObject fhirElement;
-    private final Gson gson = new Gson();
 
     protected PatientConverter patientConverter = new PatientConverter();
 
     /**
-     * Get the value of fhirElement
-     *
-     * @return the value of fhirElement
+     * Convert string into a JsonObject. This is used to validate fhir elements later and ensure
+     * that the data has the appropriate properties. The string object can be either json or xml
+     * formatted data.
+     * 
+     * @param String data the data to convert to a JsonObject
+     * @return a json object containing the data in String data
      */
-    public JsonObject getFhirElement() {
-        return this.fhirElement;
-    }
-
-    /**
-     * @param payload : the fhir data
-     */
-    public Fhir2Vmr(byte[] payload) throws JSONException {
-        String data = new String(payload);
-
+    protected JsonObject createFhirElement(String data) {
         if (logger.isDebugEnabled()) {
             final String METHODNAME = "Fhir2Vmr ";
             logger.debug(METHODNAME, "payload=", data);
@@ -53,8 +44,18 @@ public class Fhir2Vmr {
             data = xmlJSONObj.toString(4);
         } 
 
-        JsonElement jsonElement = this.gson.fromJson(data, JsonElement.class);
-        this.fhirElement = jsonElement.getAsJsonObject();
+        Gson gson = new Gson();
+
+        JsonElement jsonElement = gson.fromJson(data, JsonElement.class);
+        return jsonElement.getAsJsonObject();
+    }
+
+    /**
+     * @see createFhirElement(String)
+     */
+    protected JsonObject createFhirElement(byte[] data) {
+        String payload = new String(data);
+        return this.createFhirElement(payload);
     }
 
     /**
@@ -67,22 +68,22 @@ public class Fhir2Vmr {
     }
 
     /**
-     * Convert fhir data into cds format
+     * Convert fhir data as json object into cds formatted data. This uses several converter objects to 
+     * convert each respective structure definition.
      * 
-     * @param input 
+     * @param CdsInputWrapper wrapper : the wrapper object that will be returned containing the json data
+     * @param JsonObject fhirElement : the fhir data converted to a json object
+     * @return CDSInput element containing the data in the fhir json object
      */
-    public CDSInput getCdsInputFromFhir() {
-        CdsInputWrapper wrapper = CdsInputWrapper.getCdsInputWrapper();
-
+    public CDSInput getCdsInputFromFhir(CdsInputWrapper wrapper, JsonObject fhirElement) {
         // currently, this is a parameters resource
         // @TODO when the spec is adopted, use the hapi fhir library
         // the interesting part is in the parameters array
-        
-        if (!this.fhirElement.has("parameter")) {
+        if (!fhirElement.has("parameter")) {
             throw new IllegalArgumentException();
         }
 
-        JsonElement parameters = this.fhirElement.get("parameter");
+        JsonElement parameters = fhirElement.get("parameter");
 
         for (JsonElement element : parameters.getAsJsonArray()) {
             JsonObject object = element.getAsJsonObject();
@@ -103,5 +104,78 @@ public class Fhir2Vmr {
         }
 
         return wrapper.getCdsObject();
+    }
+
+    /**
+     * @see getCdsInputFromFhir(CdsInputWrapper, JsonObject)
+     */
+    public CDSInput getCdsInputFromFhir(String data) {
+        CdsInputWrapper wrapper = CdsInputWrapper.getCdsInputWrapper();
+        JsonObject fhirElement = this.createFhirElement(data);
+
+        return this.getCdsInputFromFhir(wrapper, fhirElement);
+    }
+
+    /**
+     * @see getCdsInputFromFhir(CdsInputWrapper, JsonObject)
+     */
+    public CDSInput getCdsInputFromFhir(byte[] data) {
+        CdsInputWrapper wrapper = CdsInputWrapper.getCdsInputWrapper();
+        JsonObject fhirElement = this.createFhirElement(data);
+
+        return this.getCdsInputFromFhir(wrapper, fhirElement);       
+    }
+
+    /**
+     * @see getCdsInputFromFhir(CdsInputWrapper, JsonObject)
+     */
+    public CDSInput getCdsInputFromFhir(JsonObject data) {
+        CdsInputWrapper wrapper = CdsInputWrapper.getCdsInputWrapper();
+
+        return this.getCdsInputFromFhir(wrapper, data);
+    }
+
+    /**
+     * @see getCdsInputFromFhir(CdsInputWrapper, JsonObject)
+     */
+    public CDSInput getCdsInputFromFhir(CdsInputWrapper wrapper, String data) {
+        JsonObject fhirElement = this.createFhirElement(data);
+        return this.getCdsInputFromFhir(wrapper, fhirElement);
+    }
+
+    /**
+     * @see getCdsInputFromFhir(CdsInputWrapper, JsonObject)
+     */
+    public CDSInput getCdsInputFromFhir(CdsInputWrapper wrapper, byte[] data) {
+        JsonObject fhirElement = this.createFhirElement(data);
+        return this.getCdsInputFromFhir(wrapper, fhirElement);        
+    }
+
+    /**
+     * @see getCdsInputFromFhir(CdsInputWrapper, JsonObject)
+     */
+    public CDSInput getCdsInputFromFhir(IceCdsInputWrapper wrapper, String data) {
+        JsonObject fhirElement = this.createFhirElement(data);
+
+        this.getCdsInputFromFhir(wrapper.getCdsInputWrapper(), fhirElement);
+        return wrapper.getCdsInput();
+    }
+
+    /**
+     * @see getCdsInputFromFhir(CdsInputWrapper, JsonObject)
+     */
+    public CDSInput getCdsInputFromFhir(IceCdsInputWrapper wrapper, byte[] data) {
+        JsonObject fhirElement = this.createFhirElement(data);
+
+        this.getCdsInputFromFhir(wrapper.getCdsInputWrapper(), fhirElement);
+        return wrapper.getCdsInput();
+    }
+
+    /**
+     * @see getCdsInputFromFhir(CdsInputWrapper, JsonObject)
+     */
+    public CDSInput getCdsInputFromFhir(IceCdsInputWrapper wrapper, JsonObject data) {
+        this.getCdsInputFromFhir(wrapper.getCdsInputWrapper(), data);
+        return wrapper.getCdsInput();
     }
 }
