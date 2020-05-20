@@ -12,13 +12,11 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
 import org.cdsframework.cds.vmr.CdsInputWrapper;
-import org.cdsframework.cds.vmr.CdsObjectAssist;
 import org.cdsframework.ice.input.IceCdsInputWrapper;
 import org.cdsframework.util.support.cds.Config;
 import org.hl7.fhir.r4.model.Immunization;
 import org.junit.Before;
 import org.junit.Test;
-import org.opencds.vmr.v1_0.schema.CDSInput;
 import org.opencds.vmr.v1_0.schema.SubstanceAdministrationEvent;
 
 import ca.uhn.fhir.parser.DataFormatException;
@@ -30,7 +28,6 @@ public class ImmunizationConverterTest {
     protected IceCdsInputWrapper wrapper;
     protected JsonObject immunization;
     protected ImmunizationConverter immunizationConverter = new ImmunizationConverter();
-    protected String before;
 
     @Before
     public void setUp() throws FileNotFoundException {
@@ -47,8 +44,6 @@ public class ImmunizationConverterTest {
 
         this.immunization = (JsonObject) obj;
         this.immunization = this.immunization.getAsJsonObject("resource");
-
-        this.before = CdsObjectAssist.cdsObjectToString(this.wrapper.getCdsInput(), CDSInput.class);
     }
 
     @Test
