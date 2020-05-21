@@ -1,7 +1,6 @@
 package org.cdsframework.messageconverter.fhir.convert.utils;
 
 /**
- *
  * @author sdn
  */
 public class FhirConstants {
