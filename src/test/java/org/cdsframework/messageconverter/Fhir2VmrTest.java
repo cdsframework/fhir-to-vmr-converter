@@ -12,6 +12,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 
 import org.cdsframework.cds.vmr.CdsInputWrapper;
@@ -140,11 +141,49 @@ public class Fhir2VmrTest {
     @Test
     public void getCdsInputFromFhirUpdatesWithPatientDataTest() {
         JsonObject data = this.fhir2Vmr.createFhirElement(this.fileContents);
+        JsonArray dataArray = data.getAsJsonArray("parameter");
+
+        for (int i = 0; i < dataArray.size(); i++) {
+            JsonObject element = dataArray.get(i).getAsJsonObject();
+
+            if (element.has("name") && element.getAsJsonPrimitive("name").toString() == "immunization") {
+                dataArray.remove(i);
+            }
+        }        
 
         CDSInput input = this.fhir2Vmr.getCdsInputFromFhir(this.wrapper, data);
         String output = CdsObjectAssist.cdsObjectToString(input, CDSInput.class);
 
         assertNotEquals(this.defaultOutput, output);
+    }
+
+    @Test
+    public void getCdsInputFromUpdatesWithImmunizationDataTest() {
+        JsonObject data = this.fhir2Vmr.createFhirElement(this.fileContents);
+        JsonArray dataArray = data.getAsJsonArray("parameter");
+
+        for (int i = 0; i < dataArray.size(); i++) {
+            JsonObject element = dataArray.get(i).getAsJsonObject();
+
+            if (element.has("name") && element.getAsJsonPrimitive("name").toString() == "patient") {
+                dataArray.remove(i);
+            }
+        }
+
+        CDSInput input = this.fhir2Vmr.getCdsInputFromFhir(this.wrapper, data);
+        String output = CdsObjectAssist.cdsObjectToString(input, CDSInput.class);
+
+        assertNotEquals(this.defaultOutput, output);        
+    }
+
+    @Test
+    public void getCdsInputUpdatesWithForecastDataTest() {
+        JsonObject data = this.fhir2Vmr.createFhirElement(this.fileContents);
+
+        CDSInput input = this.fhir2Vmr.getCdsInputFromFhir(this.wrapper, data);
+        String output = CdsObjectAssist.cdsObjectToString(input, CDSInput.class);
+
+        assertNotEquals(this.defaultOutput, output);         
     }
 
     @Test
