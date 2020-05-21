@@ -9,6 +9,7 @@ import com.google.gson.JsonObject;
 
 import org.cdsframework.cds.vmr.CdsInputWrapper;
 import org.cdsframework.ice.input.IceCdsInputWrapper;
+import org.cdsframework.messageconverter.fhir.convert.vmr.ImmunizationConverter;
 import org.cdsframework.messageconverter.fhir.convert.vmr.PatientConverter;
 import org.cdsframework.util.LogUtils;
 import org.json.JSONObject;
@@ -22,6 +23,7 @@ public class Fhir2Vmr {
     private static final LogUtils logger = LogUtils.getLogger(Fhir2Vmr.class);
     private final List<String> errorList = new ArrayList<>();
 
+    protected ImmunizationConverter immunizationConverter = new ImmunizationConverter();
     protected PatientConverter patientConverter = new PatientConverter();
 
     /**
@@ -94,6 +96,11 @@ public class Fhir2Vmr {
                 // this should be a primitive
                 if (name.isJsonPrimitive()) {
                     switch (name.getAsString()) {
+                        case "immunization" :
+                            // convert immunization data
+                            wrapper = this.immunizationConverter.convertToCds(wrapper, object.getAsJsonObject("resource"));
+                            break;
+
                         case "patient" :
                             // convert patient data
                             wrapper = this.patientConverter.convertToCds(wrapper, object.getAsJsonObject("resource"));
