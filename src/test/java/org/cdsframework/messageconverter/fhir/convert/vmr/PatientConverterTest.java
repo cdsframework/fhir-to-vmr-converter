@@ -15,6 +15,8 @@ import org.cdsframework.ice.input.IceCdsInputWrapper;
 import org.hl7.fhir.r4.model.Patient;
 import org.junit.Before;
 import org.junit.Test;
+import org.opencds.vmr.v1_0.schema.EvaluatedPerson;
+import org.opencds.vmr.v1_0.schema.II;
 
 import ca.uhn.fhir.parser.DataFormatException;
 
@@ -92,5 +94,19 @@ public class PatientConverterTest {
         this.wrapper = this.patientConverter.convertToCds(this.wrapper, this.patient);
 
         assertNull(this.wrapper.getPatientBirthTime());
+    }
+
+    @Test
+    public void convertToFhirWorksForEvaluatedPerson() {
+        EvaluatedPerson person = new EvaluatedPerson();
+
+        II id = new II();
+        id.setRoot("tester");
+
+        person.setId(id);
+
+        Patient patient = this.patientConverter.convertToFhir(person);
+
+        assertEquals(patient.getId(), "tester");
     }
 }
