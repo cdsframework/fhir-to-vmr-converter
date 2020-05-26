@@ -10,6 +10,7 @@ import org.cdsframework.messageconverter.fhir.convert.utils.FhirConstants;
 import org.hl7.fhir.r4.model.HumanName;
 import org.hl7.fhir.r4.model.Patient;
 import org.hl7.fhir.r4.model.StringType;
+import org.opencds.vmr.v1_0.schema.EvaluatedPerson;
 
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.IParser;
@@ -80,5 +81,21 @@ public class PatientConverter implements FhirConverter {
         // The following will throw a DataFormatException because of the StrictErrorHandler
         Patient patient = parser.parseResource(Patient.class, str);
         return patient;       
+    }
+
+    /**
+     * Convert an EvaluatedPerson from a VMR record to the FHIR version of the Patient. For now, it 
+     * only saves the id to be used as a reference but this can be updated to include additional
+     * metadata.
+     * 
+     * @param EvaluatedPerson person : the evaluated person from a VMR record
+     * @return a patient object
+     */
+    public Patient convertToFhir(EvaluatedPerson person) {
+        Patient patient = new Patient();
+
+        patient.setId(person.getId().getRoot());
+
+        return patient;
     }
 }
