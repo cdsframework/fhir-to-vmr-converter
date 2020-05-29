@@ -20,10 +20,18 @@ public class ImmunizationRecommendationConverter implements CdsOutputToFhirConve
 
     private static final LogUtils logger = LogUtils.getLogger(ImmunizationRecommendationConverter.class);
     
+    /**
+     * Extract the data from a CDSOutput object and put it into a FHIR compatible ImmunizationRecommendation
+     * object. 
+     * 
+     * @param CDSOutput data : object containing data for an immunization recommendation
+     * @return ImmunizationRecommendation
+     */
     public ImmunizationRecommendation convertToFhir(CDSOutput data) {
         ImmunizationRecommendation recommendation = new ImmunizationRecommendation();
 
         try {
+            // this is a simple conversion for now and simply extracts the id and creates the Patient object
             Patient patient = this.patientConverter.convertToFhir(data.getVmrOutput().getPatient());
             recommendation.setPatientTarget(patient);
         } catch (NullPointerException exception) {
@@ -31,6 +39,7 @@ public class ImmunizationRecommendationConverter implements CdsOutputToFhirConve
             return recommendation;
         }            
 
+        // pass each proposal into method to create the ImmunizationRecommendationRecommendationComponent object
         for (SubstanceAdministrationProposal proposal : data.getVmrOutput().getPatient().getClinicalStatements().getSubstanceAdministrationProposals().getSubstanceAdministrationProposal()) {
             recommendation.addRecommendation(this.convertToFhir(proposal));
         }
@@ -38,10 +47,19 @@ public class ImmunizationRecommendationConverter implements CdsOutputToFhirConve
         return recommendation;
     }
 
+    /**
+     * Each substance propsal represents a recommendation. Extract the necessary data and build it into 
+     * an ImmunizationRecommendationRecommendationComponent object which is added to the ImmunizationRecommendation
+     * object.
+     * 
+     * @param SubstanceAdministrationProposal proposal : the proposal containing recommendations for immunizations
+     * @return ImmunizationRecommendationRecommendationComponent
+     */
     public ImmunizationRecommendationRecommendationComponent convertToFhir(SubstanceAdministrationProposal proposal) {
         ImmunizationRecommendationRecommendationComponent recommendation = new ImmunizationRecommendationRecommendationComponent();
 
         try {
+            // if we can't extract the vaccine code, log it but continue
             CD proposalVaccineCode = proposal.getSubstance().getSubstanceCode();
             CodeableConcept vaccineCode = this.codeableConceptConverter.convertToFhir(proposalVaccineCode);
             recommendation.addVaccineCode(vaccineCode);
@@ -50,6 +68,7 @@ public class ImmunizationRecommendationConverter implements CdsOutputToFhirConve
         }
 
         try {
+            // if we can't extract the target disease, log it but continue
             CD proposalTargetDisease = proposal.getRelatedClinicalStatement().get(0).getObservationResult().getObservationFocus();
             CodeableConcept disease = this.codeableConceptConverter.convertToFhir(proposalTargetDisease);
             recommendation.setTargetDisease(disease);
@@ -60,6 +79,7 @@ public class ImmunizationRecommendationConverter implements CdsOutputToFhirConve
         }
 
         try {
+            // add each forecast reason but if we can't extract it, log it and continue
             for (RelatedClinicalStatement statement : proposal.getRelatedClinicalStatement()) {
                 CD proposalForecast = statement.getObservationResult().getObservationValue().getConcept();
                 CodeableConcept forecast = this.codeableConceptConverter.convertToFhir(proposalForecast);
