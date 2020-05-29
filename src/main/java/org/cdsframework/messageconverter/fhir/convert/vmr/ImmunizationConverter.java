@@ -17,7 +17,7 @@ import ca.uhn.fhir.parser.StrictErrorHandler;
 /**
  * @author sdn
  */
-public class ImmunizationConverter implements FhirConverter {
+public class ImmunizationConverter implements CdsConverter, JsonToFhirConverter {
     /**
      * Convert a json object of fhir data to cds format. Save the results to the ice cds input wrapper.
      * 

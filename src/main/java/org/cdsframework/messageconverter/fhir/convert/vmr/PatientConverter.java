@@ -10,7 +10,9 @@ import org.cdsframework.messageconverter.fhir.convert.utils.FhirConstants;
 import org.hl7.fhir.r4.model.HumanName;
 import org.hl7.fhir.r4.model.Patient;
 import org.hl7.fhir.r4.model.StringType;
+import org.opencds.vmr.v1_0.schema.CDSOutput;
 import org.opencds.vmr.v1_0.schema.EvaluatedPerson;
+import org.opencds.vmr.v1_0.schema.VMR;
 
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.IParser;
@@ -19,7 +21,7 @@ import ca.uhn.fhir.parser.StrictErrorHandler;
 /**
  * @author Brian Lamb
  */
-public class PatientConverter implements FhirConverter {
+public class PatientConverter implements CdsConverter, JsonToFhirConverter {
     /**
      * Convert a json object of fhir data to cds format. Save the results to the ice cds input wrapper.
      * 
@@ -81,6 +83,21 @@ public class PatientConverter implements FhirConverter {
         // The following will throw a DataFormatException because of the StrictErrorHandler
         Patient patient = parser.parseResource(Patient.class, str);
         return patient;       
+    }
+
+    /**
+     * Converts a CDSOutput object into a Patient record. The patient data exists in the VMR object
+     * inside of the EvaluatedPerson object. That object is passed to a method to convert
+     * the EvaluatedPerson object to a Patient.
+     * 
+     * @param CDSOutput : the cds output object to convert to a Patient object
+     * @return a patient object
+     */
+    public Patient convertToFhir(CDSOutput output) {
+        VMR vmr = output.getVmrOutput();
+        EvaluatedPerson patient = vmr.getPatient();
+
+        return this.convertToFhir(patient);
     }
 
     /**
