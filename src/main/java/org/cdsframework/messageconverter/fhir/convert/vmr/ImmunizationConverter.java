@@ -5,10 +5,12 @@ import com.google.gson.JsonObject;
 import org.cdsframework.cds.vmr.CdsInputWrapper;
 import org.cdsframework.ice.input.IceCdsInputWrapper;
 import org.cdsframework.messageconverter.fhir.convert.utils.VmrUtils;
+import org.cdsframework.util.LogUtils;
 import org.cdsframework.util.support.cds.Config;
 import org.hl7.fhir.r4.model.CodeableConcept;
 import org.hl7.fhir.r4.model.Coding;
 import org.hl7.fhir.r4.model.Immunization;
+import org.opencds.vmr.v1_0.schema.SubstanceAdministrationEvent;
 
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.IParser;
@@ -18,6 +20,9 @@ import ca.uhn.fhir.parser.StrictErrorHandler;
  * @author sdn
  */
 public class ImmunizationConverter implements CdsConverter, JsonToFhirConverter {
+    protected CodeableConceptConverter codeableConceptConverter = new CodeableConceptConverter();
+    private final LogUtils logger = LogUtils.getLogger(ImmunizationConverter.class);
+
     /**
      * Convert a json object of fhir data to cds format. Save the results to the ice cds input wrapper.
      * 
@@ -90,6 +95,27 @@ public class ImmunizationConverter implements CdsConverter, JsonToFhirConverter 
                 
         // The following will throw a DataFormatException because of the StrictErrorHandler
         Immunization immunization = parser.parseResource(Immunization.class, str);
+        return immunization;
+    }
+
+    /**
+     * Immunization data can be located in a substance administration event object. This method
+     * converts that object to an Immunization data record.
+     * 
+     * @param SubstanceAdministrationEvent event
+     * @return Immunization
+     */
+    public Immunization convertToFhir(SubstanceAdministrationEvent event) {
+        Immunization immunization = new Immunization();
+
+        try {
+            immunization.setVaccineCode(
+                this.codeableConceptConverter.convertToFhir(event.getSubstance().getSubstanceCode())
+            );
+        } catch (NullPointerException exception) {
+            this.logger.debug("convertToFhir", "Null pointer exception found when accessing substance code");
+        }
+
         return immunization;
     }
 }
