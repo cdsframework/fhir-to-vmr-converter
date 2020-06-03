@@ -1,6 +1,7 @@
 package org.cdsframework.messageconverter.fhir.convert.vmr;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -17,6 +18,8 @@ import org.cdsframework.util.support.cds.Config;
 import org.hl7.fhir.r4.model.Immunization;
 import org.junit.Before;
 import org.junit.Test;
+import org.opencds.vmr.v1_0.schema.AdministrableSubstance;
+import org.opencds.vmr.v1_0.schema.CD;
 import org.opencds.vmr.v1_0.schema.SubstanceAdministrationEvent;
 
 import ca.uhn.fhir.parser.DataFormatException;
@@ -168,5 +171,28 @@ public class ImmunizationConverterTest {
     public void convertToFhirFailsIfInvalidData() {
         JsonObject json = new JsonObject();
         this.immunizationConverter.convertToFhir(json);        
+    }
+
+    @Test
+    public void convertToFhirDoesntUpdateVaccineCodeIfNoSubstanceCode() {
+        SubstanceAdministrationEvent event = new SubstanceAdministrationEvent();
+        Immunization immunization = this.immunizationConverter.convertToFhir(event);
+        assertTrue(immunization.getVaccineCode().isEmpty());
+    }
+
+    @Test
+    public void convertToFhirCreatesImmunizationFromSubstanceAdministrationEvent() {
+        SubstanceAdministrationEvent event = new SubstanceAdministrationEvent();
+        AdministrableSubstance substance = new AdministrableSubstance();
+        
+        CD code = new CD();
+        code.setCode("jut");
+        code.setDisplayName("Junit Test");
+
+        substance.setSubstanceCode(code);
+        event.setSubstance(substance);
+
+        Immunization immunization = this.immunizationConverter.convertToFhir(event);
+        assertFalse(immunization.getVaccineCode().isEmpty());
     }
 }
