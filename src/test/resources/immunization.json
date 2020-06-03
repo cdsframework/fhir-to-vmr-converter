@@ -18,7 +18,6 @@
             "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\">poliovirus vaccine, unspecified formulation</div>"
         },
         "status": "completed",
-        "notGiven": false,
         "vaccineCode": {
             "coding": [
                 {
@@ -29,10 +28,10 @@
             ],
             "text": "poliovirus vaccine, unspecified formulation"
         },
+        "occurrenceDateTime": "2020-05-01",
         "patient": {
             "reference": "Patient/smart-1032702"
         },
-        "date": "2011-01-27",
         "primarySource": true
     },
     "search": {

@@ -1,46 +1,63 @@
 package org.cdsframework.messageconverter;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import java.util.ArrayList;
-import java.util.List;
+
 import org.cdsframework.cds.vmr.CdsInputWrapper;
-import org.cdsframework.cds.vmr.CdsObjectAssist;
-import org.cdsframework.messageconverter.fhir.convert.utils.VmrUtils;
-import org.cdsframework.messageconverter.fhir.convert.vmr.FhirCondition2Vmr;
-import org.cdsframework.messageconverter.fhir.convert.vmr.FhirImmunization2Vmr;
-import org.cdsframework.messageconverter.fhir.convert.vmr.FhirObservation2Vmr;
-import org.cdsframework.messageconverter.fhir.convert.vmr.FhirPatient2Vmr;
+import org.cdsframework.ice.input.IceCdsInputWrapper;
+import org.cdsframework.messageconverter.fhir.convert.vmr.ImmunizationConverter;
+import org.cdsframework.messageconverter.fhir.convert.vmr.PatientConverter;
 import org.cdsframework.util.LogUtils;
+import org.json.JSONObject;
+import org.json.XML;
 import org.opencds.vmr.v1_0.schema.CDSInput;
 
 /**
- *
  * @author sdn
  */
 public class Fhir2Vmr {
-
     private static final LogUtils logger = LogUtils.getLogger(Fhir2Vmr.class);
     private final List<String> errorList = new ArrayList<>();
-    private final JsonElement fhirElement;
-    private final Gson gson = new Gson();
+
+    protected ImmunizationConverter immunizationConverter = new ImmunizationConverter();
+    protected PatientConverter patientConverter = new PatientConverter();
 
     /**
-     * Get the value of fhirElement
-     *
-     * @return the value of fhirElement
+     * Convert string into a JsonObject. This is used to validate fhir elements later and ensure
+     * that the data has the appropriate properties. The string object can be either json or xml
+     * formatted data.
+     * 
+     * @param String data the data to convert to a JsonObject
+     * @return a json object containing the data in String data
      */
-    public JsonElement getFhirElement() {
-        return fhirElement;
+    protected JsonObject createFhirElement(String data) {
+        if (logger.isDebugEnabled()) {
+            final String METHODNAME = "Fhir2Vmr ";
+            logger.debug(METHODNAME, "payload=", data);
+        }
+        
+        // the data may be in xml, if so, convert to json
+        if (data.startsWith("<")) {
+            JSONObject xmlJSONObj = XML.toJSONObject(data);
+            data = xmlJSONObj.toString(4);
+        } 
+
+        Gson gson = new Gson();
+
+        JsonElement jsonElement = gson.fromJson(data, JsonElement.class);
+        return jsonElement.getAsJsonObject();
     }
 
-    public Fhir2Vmr(byte[] payload) {
-        final String METHODNAME = "Fhir2Vmr ";
-        if (logger.isDebugEnabled()) {
-            logger.debug(METHODNAME, "payload=", new String(payload));
-        }
-        fhirElement = gson.fromJson(new String(payload), JsonElement.class);
+    /**
+     * @see createFhirElement(String)
+     */
+    protected JsonObject createFhirElement(byte[] data) {
+        String payload = new String(data);
+        return this.createFhirElement(payload);
     }
 
     /**
@@ -49,73 +66,123 @@ public class Fhir2Vmr {
      * @return the value of errorList
      */
     public List<String> getErrorList() {
-        return errorList;
+        return this.errorList;
     }
 
-    public CDSInput getCdsInputFromFhir() {
-        final String METHODNAME = "getCdsInputFromFhir ";
-        JsonObject jsonObject = getFhirElement().getAsJsonObject();
-
-        // get the patient id
-        String patientId = null;
-
-        // get the patient id out of the context (DSTU3)
-        JsonObject contextObject = VmrUtils.getJsonObject(jsonObject, "context");
-        if (contextObject != null) {
-            patientId = VmrUtils.getJsonObjectAsString(contextObject, "patientId");
-        } else {
-            logger.error(METHODNAME, "contextObject is null!!!");
+    /**
+     * Convert fhir data as json object into cds formatted data. This uses several converter objects to 
+     * convert each respective structure definition.
+     * 
+     * @param CdsInputWrapper wrapper : the wrapper object that will be returned containing the json data
+     * @param JsonObject fhirElement : the fhir data converted to a json object
+     * @return CDSInput element containing the data in the fhir json object
+     */
+    public CDSInput getCdsInputFromFhir(CdsInputWrapper wrapper, JsonObject fhirElement) {
+        // currently, this is a parameters resource
+        // @TODO when the spec is adopted, use the hapi fhir library
+        // the interesting part is in the parameters array
+        if (!fhirElement.has("parameter")) {
+            throw new IllegalArgumentException();
         }
 
-        // fall back and check for it in the patient node (DSTU2)
-        if (patientId == null) {
-            patientId = VmrUtils.getJsonObjectAsString(jsonObject, "patient");
-            logger.warn(METHODNAME, "got patient id from patient node - not context!");
-        }
-        if (patientId == null) {
-            getErrorList().add(logger.error(METHODNAME, "patientId is null!!!"));
-        }
-        logger.warn(METHODNAME, "patientId=", patientId);
+        JsonElement parameters = fhirElement.get("parameter");
 
-        // get the fhir server url
-        String fhirServer = VmrUtils.getJsonObjectAsString(jsonObject, "fhirServer");
-        if (fhirServer != null) {
-            if (!fhirServer.endsWith("/")) {
-                fhirServer = fhirServer + "/";
+        for (JsonElement element : parameters.getAsJsonArray()) {
+            JsonObject object = element.getAsJsonObject();
+
+            if (object.has("name") && object.has("resource")) {
+                JsonElement name = object.get("name");
+
+                // this should be a primitive
+                if (name.isJsonPrimitive()) {
+                    switch (name.getAsString()) {
+                        case "immunization" :
+                            // convert immunization data
+                            wrapper = this.immunizationConverter.convertToCds(wrapper, object.getAsJsonObject("resource"));
+                            break;
+
+                        case "patient" :
+                            // convert patient data
+                            wrapper = this.patientConverter.convertToCds(wrapper, object.getAsJsonObject("resource"));
+                            break;
+                    }
+                }
             }
-        } else {
-            getErrorList().add(logger.warn(METHODNAME, "fhirServer is null!"));
         }
-        logger.debug(METHODNAME, "fhirServer=", fhirServer);
 
-        // get the fhir server access token
-        JsonObject fhirAuthorizationObject = VmrUtils.getJsonObject(jsonObject, "fhirAuthorization");
+        return wrapper.getCdsObject();
+    }
 
-        String accessToken = null;
-        if (fhirAuthorizationObject != null) {
-            accessToken = VmrUtils.getJsonObjectAsString(fhirAuthorizationObject, "access_token");
-        } else {
-            logger.warn(METHODNAME, "fhirAuthorizationObject is null!");
-        }
-        logger.debug(METHODNAME, "accessToken=", accessToken);
+    /**
+     * @see getCdsInputFromFhir(CdsInputWrapper, JsonObject)
+     */
+    public CDSInput getCdsInputFromFhir(String data) {
+        CdsInputWrapper wrapper = CdsInputWrapper.getCdsInputWrapper();
+        JsonObject fhirElement = this.createFhirElement(data);
 
-        // get the prefetch object
-        JsonObject prefetchObject = VmrUtils.getJsonObject(jsonObject, "prefetch");
-        logger.debug(METHODNAME, "prefetchObject=", prefetchObject);
+        return this.getCdsInputFromFhir(wrapper, fhirElement);
+    }
 
-        CdsInputWrapper input = CdsInputWrapper.getCdsInputWrapper();
+    /**
+     * @see getCdsInputFromFhir(CdsInputWrapper, JsonObject)
+     */
+    public CDSInput getCdsInputFromFhir(byte[] data) {
+        CdsInputWrapper wrapper = CdsInputWrapper.getCdsInputWrapper();
+        JsonObject fhirElement = this.createFhirElement(data);
 
-        CDSInput result = input.getCdsObject();
+        return this.getCdsInputFromFhir(wrapper, fhirElement);       
+    }
 
-        VmrUtils.setSystemUserType(result, getFhirElement(), getErrorList());
-        FhirPatient2Vmr.setPatientData(input, prefetchObject, gson, patientId, fhirServer, accessToken, getErrorList());
-        FhirCondition2Vmr.setConditionData(input, prefetchObject, gson, patientId, fhirServer, accessToken, getErrorList());
-        FhirImmunization2Vmr.setImmunizationData(input, prefetchObject, gson, patientId, fhirServer, accessToken, getErrorList());
-        FhirObservation2Vmr.setObservationData(input, prefetchObject, gson, patientId, fhirServer, accessToken, getErrorList());
+    /**
+     * @see getCdsInputFromFhir(CdsInputWrapper, JsonObject)
+     */
+    public CDSInput getCdsInputFromFhir(JsonObject data) {
+        CdsInputWrapper wrapper = CdsInputWrapper.getCdsInputWrapper();
 
-        if (logger.isDebugEnabled()) {
-            logger.debug(METHODNAME, "result=", CdsObjectAssist.cdsObjectToString(result, CDSInput.class));
-        }
-        return result;
+        return this.getCdsInputFromFhir(wrapper, data);
+    }
+
+    /**
+     * @see getCdsInputFromFhir(CdsInputWrapper, JsonObject)
+     */
+    public CDSInput getCdsInputFromFhir(CdsInputWrapper wrapper, String data) {
+        JsonObject fhirElement = this.createFhirElement(data);
+        return this.getCdsInputFromFhir(wrapper, fhirElement);
+    }
+
+    /**
+     * @see getCdsInputFromFhir(CdsInputWrapper, JsonObject)
+     */
+    public CDSInput getCdsInputFromFhir(CdsInputWrapper wrapper, byte[] data) {
+        JsonObject fhirElement = this.createFhirElement(data);
+        return this.getCdsInputFromFhir(wrapper, fhirElement);        
+    }
+
+    /**
+     * @see getCdsInputFromFhir(CdsInputWrapper, JsonObject)
+     */
+    public CDSInput getCdsInputFromFhir(IceCdsInputWrapper wrapper, String data) {
+        JsonObject fhirElement = this.createFhirElement(data);
+
+        this.getCdsInputFromFhir(wrapper.getCdsInputWrapper(), fhirElement);
+        return wrapper.getCdsInput();
+    }
+
+    /**
+     * @see getCdsInputFromFhir(CdsInputWrapper, JsonObject)
+     */
+    public CDSInput getCdsInputFromFhir(IceCdsInputWrapper wrapper, byte[] data) {
+        JsonObject fhirElement = this.createFhirElement(data);
+
+        this.getCdsInputFromFhir(wrapper.getCdsInputWrapper(), fhirElement);
+        return wrapper.getCdsInput();
+    }
+
+    /**
+     * @see getCdsInputFromFhir(CdsInputWrapper, JsonObject)
+     */
+    public CDSInput getCdsInputFromFhir(IceCdsInputWrapper wrapper, JsonObject data) {
+        this.getCdsInputFromFhir(wrapper.getCdsInputWrapper(), data);
+        return wrapper.getCdsInput();
     }
 }
