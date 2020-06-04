@@ -2,14 +2,13 @@ package org.cdsframework.messageconverter.fhir.convert.vmr;
 
 import java.util.List;
 
-import com.google.gson.JsonObject;
-
 import org.cdsframework.cds.vmr.CdsInputWrapper;
 import org.cdsframework.ice.input.IceCdsInputWrapper;
 import org.cdsframework.messageconverter.fhir.convert.utils.FhirConstants;
 import org.hl7.fhir.r4.model.HumanName;
 import org.hl7.fhir.r4.model.Patient;
 import org.hl7.fhir.r4.model.StringType;
+import org.json.JSONObject;
 import org.opencds.vmr.v1_0.schema.CDSOutput;
 import org.opencds.vmr.v1_0.schema.EvaluatedPerson;
 import org.opencds.vmr.v1_0.schema.VMR;
@@ -29,7 +28,7 @@ public class PatientConverter implements CdsConverter, JsonToFhirConverter {
      * @param JsonObject data : a json object of fhir data
      * @return IceCdsInputWrapper object updated with fhir data
      */
-    public IceCdsInputWrapper convertToCds(IceCdsInputWrapper wrapper, JsonObject data) {
+    public IceCdsInputWrapper convertToCds(IceCdsInputWrapper wrapper, JSONObject data) {
         this.convertToCds(wrapper.getCdsInputWrapper(), data);
         return wrapper;
     }
@@ -41,7 +40,7 @@ public class PatientConverter implements CdsConverter, JsonToFhirConverter {
      * @param JsonObject data : a json object of fhir data
      * @return CdsInputWrapper object updated with fhir data
      */
-    public CdsInputWrapper convertToCds(CdsInputWrapper wrapper, JsonObject data) {
+    public CdsInputWrapper convertToCds(CdsInputWrapper wrapper, JSONObject data) {
         Patient patient = this.convertToFhir(data);
 
         HumanName humanName = patient.getNameFirstRep();
@@ -70,7 +69,7 @@ public class PatientConverter implements CdsConverter, JsonToFhirConverter {
      * @param JsonObject data : the patient fhir data
      * @return a patient object populated via the fhir data
      */
-    public Patient convertToFhir(JsonObject data) {
+    public Patient convertToFhir(JSONObject data) {
         FhirContext ctx = FhirContext.forR4();
 
         // Create a parser and configure it to use the strict error handler
