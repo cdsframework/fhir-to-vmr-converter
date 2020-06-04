@@ -22,7 +22,7 @@ steps:
 - name: 'maven:3-jdk-8-slim'
   id: deploy
   entrypoint: 'mvn'
-  args: ['deploy', '-DaltDeploymentRepository=support.hln.com-snapshots::default::https://support.hln.com/artifactory/libs-snapshot-local']
+  args: ['deploy', '-DaltDeploymentRepository=support.hln.com-snapshots::default::https://support.hln.com/artifactory/libs-release-local']
   volumes:
   - name: 'm2'
     path: /root/.m2
