@@ -25,7 +25,7 @@ public class PatientConverter implements CdsConverter, JsonToFhirConverter {
      * Convert a json object of fhir data to cds format. Save the results to the ice cds input wrapper.
      * 
      * @param IceCdsInputWrapper wrapper : wrapper object, used to store patient data
-     * @param JsonObject data : a json object of fhir data
+     * @param JSONObject data : a json object of fhir data
      * @return IceCdsInputWrapper object updated with fhir data
      */
     public IceCdsInputWrapper convertToCds(IceCdsInputWrapper wrapper, JSONObject data) {
@@ -37,7 +37,7 @@ public class PatientConverter implements CdsConverter, JsonToFhirConverter {
      * Convert a json object of fhir data to cds format. Save the results to the cds input wrapper.
      * 
      * @param CdsInputWrapper wrapper : wrapper object, used to store patient data
-     * @param JsonObject data : a json object of fhir data
+     * @param JSONObject data : a json object of fhir data
      * @return CdsInputWrapper object updated with fhir data
      */
     public CdsInputWrapper convertToCds(CdsInputWrapper wrapper, JSONObject data) {
@@ -66,7 +66,7 @@ public class PatientConverter implements CdsConverter, JsonToFhirConverter {
      * To make parsing the patient data easier, convert to a patient object to easily get
      * the data out.
      * 
-     * @param JsonObject data : the patient fhir data
+     * @param JSONObject data : the patient fhir data
      * @return a patient object populated via the fhir data
      */
     public Patient convertToFhir(JSONObject data) {

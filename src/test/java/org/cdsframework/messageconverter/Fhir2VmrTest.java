@@ -53,7 +53,7 @@ public class Fhir2VmrTest {
     }
 
     @Test
-    public void jsonDataCreatesJsonObjectTest() {        
+    public void jsonDataCreatesJSONObjectTest() {        
         String data = "{json: true}";
 
         JSONObject fhirData = this.fhir2Vmr.createFhirElement(data);
@@ -63,7 +63,7 @@ public class Fhir2VmrTest {
     }
 
     @Test
-    public void xmlDataCreatesJsonObjectTest() {
+    public void xmlDataCreatesJSONObjectTest() {
         String data = "<json>true</json>";
 
         JSONObject fhirData = this.fhir2Vmr.createFhirElement(data);
@@ -239,7 +239,7 @@ public class Fhir2VmrTest {
     }
 
     @Test
-    public void getCdsInputWorksWithIceCdsInputWrapperJsonObjectDataTest() {
+    public void getCdsInputWorksWithIceCdsInputWrapperJSONObjectDataTest() {
         IceCdsInputWrapper wrapper = new IceCdsInputWrapper();
         JSONObject data = this.fhir2Vmr.createFhirElement(this.fileContents);
 
