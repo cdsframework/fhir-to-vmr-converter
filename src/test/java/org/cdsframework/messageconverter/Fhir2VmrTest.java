@@ -1,6 +1,7 @@
 package org.cdsframework.messageconverter;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -12,12 +13,11 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
-
 import org.cdsframework.cds.vmr.CdsInputWrapper;
 import org.cdsframework.cds.vmr.CdsObjectAssist;
 import org.cdsframework.ice.input.IceCdsInputWrapper;
+import org.json.JSONArray;
+import org.json.JSONObject;
 import org.junit.Before;
 import org.junit.Test;
 import org.opencds.vmr.v1_0.schema.CDSInput;
@@ -53,33 +53,33 @@ public class Fhir2VmrTest {
     }
 
     @Test
-    public void jsonDataCreatesJsonObjectTest() {        
+    public void jsonDataCreatesJSONObjectTest() {        
         String data = "{json: true}";
 
-        JsonObject fhirData = this.fhir2Vmr.createFhirElement(data);
+        JSONObject fhirData = this.fhir2Vmr.createFhirElement(data);
 
         assertTrue(fhirData.has("json"));
-        assertTrue(fhirData.isJsonObject());
+        assertFalse(fhirData.isEmpty());
     }
 
     @Test
-    public void xmlDataCreatesJsonObjectTest() {
+    public void xmlDataCreatesJSONObjectTest() {
         String data = "<json>true</json>";
 
-        JsonObject fhirData = this.fhir2Vmr.createFhirElement(data);
+        JSONObject fhirData = this.fhir2Vmr.createFhirElement(data);
 
         assertTrue(fhirData.has("json"));
-        assertTrue(fhirData.isJsonObject());
+        assertFalse(fhirData.isEmpty());
     }
 
     @Test
     public void createFhirElementWorksWithBytesTest() {
         String data = "{json: true}";
 
-        JsonObject fhirData = this.fhir2Vmr.createFhirElement(data.getBytes());
+        JSONObject fhirData = this.fhir2Vmr.createFhirElement(data.getBytes());
 
         assertTrue(fhirData.has("json"));
-        assertTrue(fhirData.isJsonObject());
+        assertFalse(fhirData.isEmpty());
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -140,16 +140,16 @@ public class Fhir2VmrTest {
 
     @Test
     public void getCdsInputFromFhirUpdatesWithPatientDataTest() {
-        JsonObject data = this.fhir2Vmr.createFhirElement(this.fileContents);
-        JsonArray dataArray = data.getAsJsonArray("parameter");
+        JSONObject data = this.fhir2Vmr.createFhirElement(this.fileContents);
+        JSONArray dataArray = data.getJSONArray("parameter");
 
-        for (int i = 0; i < dataArray.size(); i++) {
-            JsonObject element = dataArray.get(i).getAsJsonObject();
+        for (int i = 0; i < dataArray.length(); i++) {
+            JSONObject element = dataArray.getJSONObject(i);
 
-            if (element.has("name") && element.getAsJsonPrimitive("name").toString() == "immunization") {
-                dataArray.remove(i);
+            if (element.has("name") && element.getString("name").equals("immunization")) {
+                data.getJSONArray("parameter").remove(i);
             }
-        }        
+        }
 
         CDSInput input = this.fhir2Vmr.getCdsInputFromFhir(this.wrapper, data);
         String output = CdsObjectAssist.cdsObjectToString(input, CDSInput.class);
@@ -159,13 +159,13 @@ public class Fhir2VmrTest {
 
     @Test
     public void getCdsInputFromUpdatesWithImmunizationDataTest() {
-        JsonObject data = this.fhir2Vmr.createFhirElement(this.fileContents);
-        JsonArray dataArray = data.getAsJsonArray("parameter");
+        JSONObject data = this.fhir2Vmr.createFhirElement(this.fileContents);
+        JSONArray dataArray = data.getJSONArray("parameter");
 
-        for (int i = 0; i < dataArray.size(); i++) {
-            JsonObject element = dataArray.get(i).getAsJsonObject();
+        for (int i = 0; i < dataArray.length(); i++) {
+            JSONObject element = dataArray.getJSONObject(i);
 
-            if (element.has("name") && element.getAsJsonPrimitive("name").toString() == "patient") {
+            if (element.has("name") && element.getString("name") == "patient") {
                 dataArray.remove(i);
             }
         }
@@ -178,7 +178,7 @@ public class Fhir2VmrTest {
 
     @Test
     public void getCdsInputUpdatesWithForecastDataTest() {
-        JsonObject data = this.fhir2Vmr.createFhirElement(this.fileContents);
+        JSONObject data = this.fhir2Vmr.createFhirElement(this.fileContents);
 
         CDSInput input = this.fhir2Vmr.getCdsInputFromFhir(this.wrapper, data);
         String output = CdsObjectAssist.cdsObjectToString(input, CDSInput.class);
@@ -239,9 +239,9 @@ public class Fhir2VmrTest {
     }
 
     @Test
-    public void getCdsInputWorksWithIceCdsInputWrapperJsonObjectDataTest() {
+    public void getCdsInputWorksWithIceCdsInputWrapperJSONObjectDataTest() {
         IceCdsInputWrapper wrapper = new IceCdsInputWrapper();
-        JsonObject data = this.fhir2Vmr.createFhirElement(this.fileContents);
+        JSONObject data = this.fhir2Vmr.createFhirElement(this.fileContents);
 
         CDSInput input = this.fhir2Vmr.getCdsInputFromFhir(wrapper, data);
         String output = CdsObjectAssist.cdsObjectToString(input, CDSInput.class);

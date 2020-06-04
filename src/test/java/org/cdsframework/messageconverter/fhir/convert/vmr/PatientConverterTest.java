@@ -4,15 +4,14 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 
 import org.cdsframework.cds.vmr.CdsInputWrapper;
 import org.cdsframework.ice.input.IceCdsInputWrapper;
 import org.hl7.fhir.r4.model.Patient;
+import org.json.JSONObject;
 import org.junit.Before;
 import org.junit.Test;
 import org.opencds.vmr.v1_0.schema.EvaluatedPerson;
@@ -25,24 +24,18 @@ import ca.uhn.fhir.parser.DataFormatException;
  */
 public class PatientConverterTest {
     protected CdsInputWrapper wrapper;
-    protected JsonObject patient;
+    protected JSONObject patient;
     protected PatientConverter patientConverter = new PatientConverter();
 
     @Before
-    public void setUp() throws FileNotFoundException {
+    public void setUp() throws IOException {
         this.wrapper = CdsInputWrapper.getCdsInputWrapper();
 
-        JsonParser parser = new JsonParser();
-        Object obj;
+        byte[] data = Files.readAllBytes(Paths.get("src/test/resources/patient.json"));
+        String fileContents = new String(data);
 
-        try {
-            obj = parser.parse(new FileReader("src/test/resources/patient.json"));
-        } catch (FileNotFoundException exception) {
-            obj = "";
-        }
-
-        this.patient = (JsonObject) obj;
-        this.patient = this.patient.getAsJsonObject("resource");
+        this.patient = new JSONObject(fileContents);
+        this.patient = this.patient.getJSONObject("resource");
     }
 
     @Test
@@ -53,7 +46,7 @@ public class PatientConverterTest {
 
     @Test(expected = DataFormatException.class)
     public void convertToFhirFailsIfInvalidData() {
-        JsonObject json = new JsonObject();
+        JSONObject json = new JSONObject();
         this.patientConverter.convertToFhir(json);
     }
 
