@@ -5,17 +5,16 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-import java.io.FileNotFoundException;
-import java.io.FileReader;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.List;
-
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 
 import org.cdsframework.cds.vmr.CdsInputWrapper;
 import org.cdsframework.ice.input.IceCdsInputWrapper;
 import org.cdsframework.util.support.cds.Config;
 import org.hl7.fhir.r4.model.Immunization;
+import org.json.JSONObject;
 import org.junit.Before;
 import org.junit.Test;
 import org.opencds.vmr.v1_0.schema.AdministrableSubstance;
@@ -29,24 +28,18 @@ import ca.uhn.fhir.parser.DataFormatException;
  */
 public class ImmunizationConverterTest {
     protected IceCdsInputWrapper wrapper;
-    protected JsonObject immunization;
+    protected JSONObject immunization;
     protected ImmunizationConverter immunizationConverter = new ImmunizationConverter();
 
     @Before
-    public void setUp() throws FileNotFoundException {
+    public void setUp() throws IOException {
         this.wrapper = new IceCdsInputWrapper();
 
-        JsonParser parser = new JsonParser();
-        Object obj;
+        byte[] data = Files.readAllBytes(Paths.get("src/test/resources/immunization.json"));
+        String fileContents = new String(data);
 
-        try {
-            obj = parser.parse(new FileReader("src/test/resources/immunization.json"));
-        } catch (FileNotFoundException exception) {
-            obj = "";
-        }
-
-        this.immunization = (JsonObject) obj;
-        this.immunization = this.immunization.getAsJsonObject("resource");
+        this.immunization = new JSONObject(fileContents);
+        this.immunization = this.immunization.getJSONObject("resource");
     }
 
     @Test
@@ -75,7 +68,7 @@ public class ImmunizationConverterTest {
     @Test
     public void convertToCdsDoesNothingIfNoOccurrenceDateTimeTest() {
         this.immunization.remove("occurrenceDateTime");
-        this.immunization.addProperty("occurrenceString", "2020-05-20");
+        this.immunization.put("occurrenceString", "2020-05-20");
 
         IceCdsInputWrapper wrapper = this.immunizationConverter.convertToCds(this.wrapper, this.immunization);
         List<SubstanceAdministrationEvent> immunizations = wrapper.getCdsInputWrapper().getSubstanceAdministrationEvents();
@@ -105,11 +98,11 @@ public class ImmunizationConverterTest {
 
     @Test
     public void convertToCdsDoesNothingIfCodeSystemHasNoOidTest() {
-        this.immunization.getAsJsonObject("vaccineCode").getAsJsonArray("coding").get(0).getAsJsonObject()
+        this.immunization.getJSONObject("vaccineCode").getJSONArray("coding").getJSONObject(0)
                 .remove("system");
 
-        this.immunization.getAsJsonObject("vaccineCode").getAsJsonArray("coding").get(0).getAsJsonObject()
-                .addProperty("system", "does-not-exit");
+        this.immunization.getJSONObject("vaccineCode").getJSONArray("coding").getJSONObject(0)
+                .put("system", "does-not-exit");
 
         IceCdsInputWrapper wrapper = this.immunizationConverter.convertToCds(this.wrapper, this.immunization);
         List<SubstanceAdministrationEvent> immunizations = wrapper.getCdsInputWrapper().getSubstanceAdministrationEvents();
@@ -130,16 +123,14 @@ public class ImmunizationConverterTest {
         IceCdsInputWrapper wrapper = this.immunizationConverter.convertToCds(this.wrapper, this.immunization);
         List<SubstanceAdministrationEvent> immunizations = wrapper.getCdsInputWrapper().getSubstanceAdministrationEvents();
 
-        String code = this.immunization.getAsJsonObject("vaccineCode")
-            .getAsJsonArray("coding")
-            .get(0)
-            .getAsJsonObject()
-            .getAsJsonPrimitive("code")
-            .getAsString();
-        String administered = this.immunization.get("occurrenceDateTime").getAsString().replace("-", "");
+        String code = this.immunization.getJSONObject("vaccineCode")
+            .getJSONArray("coding")
+            .getJSONObject(0)
+            .getString("code");
+        String administered = this.immunization.getString("occurrenceDateTime").replace("-", "");
         String codeOid = Config.getCodeSystemOid("VACCINE");
         String administrationId = Config.getCodeSystemOid("ADMINISTRATION_ID");
-        String id = "Immunization/" + this.immunization.get("id").getAsString() + "/_history/1";
+        String id = "Immunization/" + this.immunization.getString("id") + "/_history/1";
         
         for (SubstanceAdministrationEvent immunization : immunizations) {
             // check the things were set correctly
@@ -169,7 +160,7 @@ public class ImmunizationConverterTest {
     
     @Test(expected = DataFormatException.class)
     public void convertToFhirFailsIfInvalidData() {
-        JsonObject json = new JsonObject();
+        JSONObject json = new JSONObject();
         this.immunizationConverter.convertToFhir(json);        
     }
 
