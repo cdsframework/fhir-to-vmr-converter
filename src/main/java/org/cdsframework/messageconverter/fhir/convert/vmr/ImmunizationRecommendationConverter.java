@@ -15,7 +15,7 @@ import org.opencds.vmr.v1_0.schema.SubstanceAdministrationProposal;
 /**
  * @author Brian Lamb
  */
-public class ImmunizationRecommendationConverter implements CdsOutputToFhirConverter {
+public class ImmunizationRecommendationConverter implements CdsToFhirConverter {
     protected CodeableConceptConverter codeableConceptConverter = new CodeableConceptConverter();
     protected ImmunizationConverter immunizationConverter = new ImmunizationConverter();
     protected PatientConverter patientConverter = new PatientConverter();
