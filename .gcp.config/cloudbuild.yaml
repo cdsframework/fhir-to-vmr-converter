@@ -1,0 +1,28 @@
+steps:
+- name: 'gcr.io/cloud-builders/gcloud'
+  args:
+  - kms
+  - decrypt
+  - --ciphertext-file=.gcp.config/settings.enc
+  - --plaintext-file=/root/.m2/settings.xml
+  - --location=global
+  - --keyring=main
+  - --key=gcb_key
+  volumes:
+  - name: 'm2'
+    path: /root/.m2
+- name: 'maven:3-jdk-8-slim'
+  id: build
+  entrypoint: 'mvn'
+  args: ['clean', 'install']
+  volumes:
+  - name: 'm2'
+    path: /root/.m2
+
+- name: 'maven:3-jdk-8-slim'
+  id: deploy
+  entrypoint: 'mvn'
+  args: ['deploy', '-DaltDeploymentRepository=support.hln.com-snapshots::default::https://support.hln.com/artifactory/libs-snapshot-local']
+  volumes:
+  - name: 'm2'
+    path: /root/.m2
