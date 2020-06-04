@@ -30,7 +30,6 @@ public class Vmr2FhirTest {
     @Test
     public void getEvaluationsContainsListOfEvaluations() {
         List<ImmunizationEvaluation> evaluations = this.vmr2Fhir.getEvaluations(this.output);
-
         assertFalse(evaluations.isEmpty());
     }
 

@@ -13,7 +13,6 @@ import java.time.ZoneId;
 
 import org.cdsframework.cds.vmr.CdsInputWrapper;
 import org.cdsframework.ice.input.IceCdsInputWrapper;
-import org.hl7.fhir.exceptions.FHIRException;
 import org.hl7.fhir.r4.model.Enumerations;
 import org.hl7.fhir.r4.model.Patient;
 import org.json.JSONObject;
@@ -82,11 +81,12 @@ public class PatientConverterTest {
         this.patientConverter.convertToFhir(json);
     }
 
-    @Test(expected = FHIRException.class)
+    @Test
     public void convertToFhirFailsIfBadGender() throws ParseException {
         Demographics demographics = this.createDemographics("incorrect", "20000120");
         this.person.setDemographics(demographics);
-        this.patientConverter.convertToFhir(this.person);
+        Patient patient = this.patientConverter.convertToFhir(this.person);
+        assertNull(patient.getGender());
     }
 
     @Test(expected = ParseException.class)
