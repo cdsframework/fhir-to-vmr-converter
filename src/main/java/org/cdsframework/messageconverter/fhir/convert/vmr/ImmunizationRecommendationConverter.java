@@ -1,7 +1,5 @@
 package org.cdsframework.messageconverter.fhir.convert.vmr;
 
-import java.text.ParseException;
-
 import org.cdsframework.util.LogUtils;
 import org.hl7.fhir.r4.model.CodeableConcept;
 import org.hl7.fhir.r4.model.ImmunizationRecommendation;
@@ -39,11 +37,7 @@ public class ImmunizationRecommendationConverter implements CdsOutputToFhirConve
         } catch (NullPointerException exception) {
             logger.debug("convertToFhir", "Null pointer exception found when accessing patient record");
             return recommendation;
-        } catch (ParseException exception) {
-            logger.debug("convertToFhir", "Improperly formatted patient date.");
-        } catch (IllegalArgumentException exception) {
-            logger.debug("convertToFhir", "Unknown gender code");
-        }   
+        }            
 
         // pass each proposal into method to create the ImmunizationRecommendationRecommendationComponent object
         for (SubstanceAdministrationProposal proposal : data.getVmrOutput().getPatient().getClinicalStatements().getSubstanceAdministrationProposals().getSubstanceAdministrationProposal()) {

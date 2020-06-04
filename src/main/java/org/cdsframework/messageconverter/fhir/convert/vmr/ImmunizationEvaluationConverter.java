@@ -1,6 +1,5 @@
 package org.cdsframework.messageconverter.fhir.convert.vmr;
 
-import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -29,7 +28,7 @@ public class ImmunizationEvaluationConverter implements CdsOutputToFhirListConve
      */
     public List<ImmunizationEvaluation> convertToFhir(CDSOutput data) {
         List<ImmunizationEvaluation> evaluations = new ArrayList<ImmunizationEvaluation>();
-        Patient patient = new Patient();
+        Patient patient;
 
         try {
             // this is a simple conversion for now and simply extracts the id and creates the Patient object
@@ -37,11 +36,7 @@ public class ImmunizationEvaluationConverter implements CdsOutputToFhirListConve
         } catch (NullPointerException exception) {
             this.logger.debug("convertToFhir", "Null pointer exception found when accessing patient record");
             return evaluations;
-        } catch (ParseException exception) {
-            logger.debug("convertToFhir", "Improperly formatted patient date.");
-        } catch (IllegalArgumentException exception) {
-            logger.debug("convertToFhir", "Unknown gender code");
-        }  
+        }
 
         for (SubstanceAdministrationEvent event : data.getVmrOutput().getPatient().getClinicalStatements().getSubstanceAdministrationEvents().getSubstanceAdministrationEvent()) {
             ImmunizationEvaluation evaluation = this.convertToFhir(patient, event);

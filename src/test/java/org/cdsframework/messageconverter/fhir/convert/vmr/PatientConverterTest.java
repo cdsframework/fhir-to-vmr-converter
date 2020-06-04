@@ -7,23 +7,15 @@ import static org.junit.Assert.assertTrue;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.text.ParseException;
-import java.time.LocalDate;
-import java.time.ZoneId;
 
 import org.cdsframework.cds.vmr.CdsInputWrapper;
 import org.cdsframework.ice.input.IceCdsInputWrapper;
-import org.hl7.fhir.exceptions.FHIRException;
-import org.hl7.fhir.r4.model.Enumerations;
 import org.hl7.fhir.r4.model.Patient;
 import org.json.JSONObject;
 import org.junit.Before;
 import org.junit.Test;
-import org.opencds.vmr.v1_0.schema.CD;
 import org.opencds.vmr.v1_0.schema.EvaluatedPerson;
-import org.opencds.vmr.v1_0.schema.EvaluatedPerson.Demographics;
 import org.opencds.vmr.v1_0.schema.II;
-import org.opencds.vmr.v1_0.schema.TS;
 
 import ca.uhn.fhir.parser.DataFormatException;
 
@@ -34,7 +26,6 @@ public class PatientConverterTest {
     protected CdsInputWrapper wrapper;
     protected JSONObject patient;
     protected PatientConverter patientConverter = new PatientConverter();
-    protected EvaluatedPerson person;
 
     @Before
     public void setUp() throws IOException {
@@ -45,29 +36,6 @@ public class PatientConverterTest {
 
         this.patient = new JSONObject(fileContents);
         this.patient = this.patient.getJSONObject("resource");
-
-        this.person = new EvaluatedPerson();
-
-        II id = new II();
-        id.setRoot("tester");
-
-        this.person.setId(id);
-        this.person.setDemographics(this.createDemographics("male", "20000120"));
-    }
-
-    protected Demographics createDemographics(String gender, String birthdate) {
-        Demographics demographics = new Demographics();
-
-        CD genderCode = new CD();
-        TS birthtime = new TS();
-
-        genderCode.setCode(gender);
-        birthtime.setValue(birthdate);
-
-        demographics.setGender(genderCode);
-        demographics.setBirthTime(birthtime);
-
-        return demographics;
     }
 
     @Test
@@ -80,20 +48,6 @@ public class PatientConverterTest {
     public void convertToFhirFailsIfInvalidData() {
         JSONObject json = new JSONObject();
         this.patientConverter.convertToFhir(json);
-    }
-
-    @Test(expected = FHIRException.class)
-    public void convertToFhirFailsIfBadGender() throws ParseException {
-        Demographics demographics = this.createDemographics("incorrect", "20000120");
-        this.person.setDemographics(demographics);
-        this.patientConverter.convertToFhir(this.person);
-    }
-
-    @Test(expected = ParseException.class)
-    public void convertToFhirFailsIfBadBirthdate() throws ParseException {
-        Demographics demographics = this.createDemographics("male", "sasdfas");
-        this.person.setDemographics(demographics);
-        this.patientConverter.convertToFhir(this.person);
     }
 
     @Test
@@ -136,15 +90,16 @@ public class PatientConverterTest {
     }
 
     @Test
-    public void convertToFhirWorksForEvaluatedPerson() throws ParseException {
-        Patient patient = this.patientConverter.convertToFhir(this.person);
+    public void convertToFhirWorksForEvaluatedPerson() {
+        EvaluatedPerson person = new EvaluatedPerson();
 
-        LocalDate birthdate = patient.getBirthDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+        II id = new II();
+        id.setRoot("tester");
+
+        person.setId(id);
+
+        Patient patient = this.patientConverter.convertToFhir(person);
 
         assertEquals(patient.getId(), "tester");
-        assertEquals(birthdate.getYear(), 2000);
-        assertEquals(birthdate.getMonthValue(), 1);
-        assertEquals(birthdate.getDayOfMonth(), 20);
-        assertEquals(patient.getGender(), Enumerations.AdministrativeGender.MALE);
     }
 }
