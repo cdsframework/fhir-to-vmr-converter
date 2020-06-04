@@ -13,7 +13,7 @@ import org.opencds.vmr.v1_0.schema.SubstanceAdministrationEvent;
 /**
  * @author Brian Lamb
  */
-public class ImmunizationEvaluationConverter implements CdsOutputToFhirListConverter {
+public class ImmunizationEvaluationConverter implements CdsToFhirListConverter {
     protected CodeableConceptConverter codeableConceptConverter = new CodeableConceptConverter();
     protected ImmunizationConverter immunizationConverter = new ImmunizationConverter();
     protected PatientConverter patientConverter = new PatientConverter();
