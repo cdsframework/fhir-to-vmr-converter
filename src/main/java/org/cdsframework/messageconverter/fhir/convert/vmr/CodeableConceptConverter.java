@@ -7,12 +7,12 @@ import org.opencds.vmr.v1_0.schema.CD;
 /**
  * @author Brian Lamb
  */
-public class CodeableConceptConverter {
+public class CodeableConceptConverter implements CDConverter<CodeableConcept> {
     /**
      * Convert a CD object into a CodeableConcept.
      * 
      * @param CD code : the CD object containing the data for the codeable concept
-     * @return Codeable
+     * @return CodeableConcept
      */
     public CodeableConcept convertToFhir(CD code) {
         CodeableConcept codeableConcept = new CodeableConcept();

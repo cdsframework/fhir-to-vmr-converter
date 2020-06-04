@@ -25,6 +25,8 @@ import ca.uhn.fhir.parser.StrictErrorHandler;
  * @author Brian Lamb
  */
 public class PatientConverter implements CdsConverter, JsonToFhirConverter {
+    protected AdministrativeGenderConverter administrativeGenderConverter = new AdministrativeGenderConverter();
+
     /**
      * Convert a json object of fhir data to cds format. Save the results to the ice
      * cds input wrapper.
@@ -117,9 +119,10 @@ public class PatientConverter implements CdsConverter, JsonToFhirConverter {
      */
     public Patient convertToFhir(EvaluatedPerson person) throws IllegalArgumentException, ParseException {
         Patient patient = new Patient();
-        AdministrativeGender gender = AdministrativeGender.fromCode(
-            person.getDemographics().getGender().getCode()
+        AdministrativeGender gender = this.administrativeGenderConverter.convertToFhir(
+            person.getDemographics().getGender()
         );
+
         Date birthdate = new SimpleDateFormat("yyyymmdd").parse(
             person.getDemographics().getBirthTime().getValue()
         );
