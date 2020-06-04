@@ -1,10 +1,14 @@
 package org.cdsframework.messageconverter.fhir.convert.vmr;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 
 import org.cdsframework.cds.vmr.CdsInputWrapper;
 import org.cdsframework.ice.input.IceCdsInputWrapper;
 import org.cdsframework.messageconverter.fhir.convert.utils.FhirConstants;
+import org.hl7.fhir.r4.model.Enumerations.AdministrativeGender;
 import org.hl7.fhir.r4.model.HumanName;
 import org.hl7.fhir.r4.model.Patient;
 import org.hl7.fhir.r4.model.StringType;
@@ -22,10 +26,12 @@ import ca.uhn.fhir.parser.StrictErrorHandler;
  */
 public class PatientConverter implements CdsConverter, JsonToFhirConverter {
     /**
-     * Convert a json object of fhir data to cds format. Save the results to the ice cds input wrapper.
+     * Convert a json object of fhir data to cds format. Save the results to the ice
+     * cds input wrapper.
      * 
-     * @param IceCdsInputWrapper wrapper : wrapper object, used to store patient data
-     * @param JSONObject data : a json object of fhir data
+     * @param IceCdsInputWrapper wrapper : wrapper object, used to store patient
+     *                           data
+     * @param JSONObject         data : a json object of fhir data
      * @return IceCdsInputWrapper object updated with fhir data
      */
     public IceCdsInputWrapper convertToCds(IceCdsInputWrapper wrapper, JSONObject data) {
@@ -34,10 +40,11 @@ public class PatientConverter implements CdsConverter, JsonToFhirConverter {
     }
 
     /**
-     * Convert a json object of fhir data to cds format. Save the results to the cds input wrapper.
+     * Convert a json object of fhir data to cds format. Save the results to the cds
+     * input wrapper.
      * 
      * @param CdsInputWrapper wrapper : wrapper object, used to store patient data
-     * @param JSONObject data : a json object of fhir data
+     * @param JSONObject      data : a json object of fhir data
      * @return CdsInputWrapper object updated with fhir data
      */
     public CdsInputWrapper convertToCds(CdsInputWrapper wrapper, JSONObject data) {
@@ -63,8 +70,8 @@ public class PatientConverter implements CdsConverter, JsonToFhirConverter {
     }
 
     /**
-     * To make parsing the patient data easier, convert to a patient object to easily get
-     * the data out.
+     * To make parsing the patient data easier, convert to a patient object to
+     * easily get the data out.
      * 
      * @param JSONObject data : the patient fhir data
      * @return a patient object populated via the fhir data
@@ -78,21 +85,22 @@ public class PatientConverter implements CdsConverter, JsonToFhirConverter {
 
         // get the string representation of the json object
         String str = data.toString();
-                
-        // The following will throw a DataFormatException because of the StrictErrorHandler
+
+        // The following will throw a DataFormatException because of the
+        // StrictErrorHandler
         Patient patient = parser.parseResource(Patient.class, str);
-        return patient;       
+        return patient;
     }
 
     /**
-     * Converts a CDSOutput object into a Patient record. The patient data exists in the VMR object
-     * inside of the EvaluatedPerson object. That object is passed to a method to convert
-     * the EvaluatedPerson object to a Patient.
+     * Converts a CDSOutput object into a Patient record. The patient data exists in
+     * the VMR object inside of the EvaluatedPerson object. That object is passed to
+     * a method to convert the EvaluatedPerson object to a Patient.
      * 
      * @param CDSOutput : the cds output object to convert to a Patient object
      * @return a patient object
      */
-    public Patient convertToFhir(CDSOutput output) {
+    public Patient convertToFhir(CDSOutput output) throws IllegalArgumentException, ParseException {
         VMR vmr = output.getVmrOutput();
         EvaluatedPerson patient = vmr.getPatient();
 
@@ -100,17 +108,25 @@ public class PatientConverter implements CdsConverter, JsonToFhirConverter {
     }
 
     /**
-     * Convert an EvaluatedPerson from a VMR record to the FHIR version of the Patient. For now, it 
-     * only saves the id to be used as a reference but this can be updated to include additional
-     * metadata.
+     * Convert an EvaluatedPerson from a VMR record to the FHIR version of the
+     * Patient. For now, it only saves the id to be used as a reference but this can
+     * be updated to include additional metadata.
      * 
      * @param EvaluatedPerson person : the evaluated person from a VMR record
      * @return a patient object
      */
-    public Patient convertToFhir(EvaluatedPerson person) {
+    public Patient convertToFhir(EvaluatedPerson person) throws IllegalArgumentException, ParseException {
         Patient patient = new Patient();
+        AdministrativeGender gender = AdministrativeGender.fromCode(
+            person.getDemographics().getGender().getCode()
+        );
+        Date birthdate = new SimpleDateFormat("yyyymmdd").parse(
+            person.getDemographics().getBirthTime().getValue()
+        );
 
         patient.setId(person.getId().getRoot());
+        patient.setGender(gender);
+        patient.setBirthDate(birthdate);
 
         return patient;
     }
