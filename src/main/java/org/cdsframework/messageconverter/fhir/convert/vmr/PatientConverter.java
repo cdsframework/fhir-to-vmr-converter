@@ -46,6 +46,13 @@ public class PatientConverter implements CdsConverter, JsonToFhirConverter {
         return wrapper;
     }
 
+    /**
+     * Convert a FHIR compliant Patient object into an OpenCDS compliant
+     * EvaluatedPerson object.
+     * 
+     * @param Patient patient : the FHIR compliant object to convert
+     * @return EvaluatedPerson
+     */
     public EvaluatedPerson convertToCds(Patient patient) {
         EvaluatedPerson person = new EvaluatedPerson();
         Demographics demographics = new Demographics();

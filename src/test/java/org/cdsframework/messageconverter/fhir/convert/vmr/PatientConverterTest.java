@@ -1,7 +1,6 @@
 package org.cdsframework.messageconverter.fhir.convert.vmr;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
@@ -154,7 +153,11 @@ public class PatientConverterTest {
 
     @Test
     public void convertToCdsSetsEvaluatedPersonCorrectly() throws ParseException {
-        Date birthDate = new SimpleDateFormat("yyyymmdd").parse("20200608");
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyymmdd");
+        Date birthDate = dateFormat.parse("20200608");
+
+        SimpleDateFormat expectedDateFormat = new SimpleDateFormat("EEE MMM dd HH:mm:ss z yyyy");
+
         AdministrativeGender gender = AdministrativeGender.fromCode("male");
 
         Patient patient = new Patient();
@@ -163,11 +166,13 @@ public class PatientConverterTest {
         patient.setGender(gender);
 
         EvaluatedPerson person = this.patientConverter.convertToCds(patient);
+        Date personDate = expectedDateFormat.parse(
+            person.getDemographics().getBirthTime().getValue()
+        );
 
-        assertNotNull(person);
         assertTrue(person instanceof EvaluatedPerson);
         assertEquals("male", person.getDemographics().getGender().getCode());
-        assertEquals("Wed Jan 08 00:06:00 EST 2020", person.getDemographics().getBirthTime().getValue());
+        assertEquals(personDate, birthDate);
         assertEquals("my id", person.getId().getRoot());
     }
 }
