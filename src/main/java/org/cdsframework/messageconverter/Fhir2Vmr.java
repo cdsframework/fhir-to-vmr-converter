@@ -8,10 +8,16 @@ import org.cdsframework.ice.input.IceCdsInputWrapper;
 import org.cdsframework.messageconverter.fhir.convert.vmr.ImmunizationConverter;
 import org.cdsframework.messageconverter.fhir.convert.vmr.PatientConverter;
 import org.cdsframework.util.LogUtils;
+import org.hl7.fhir.r4.model.Immunization;
+import org.hl7.fhir.r4.model.Patient;
 import org.json.JSONObject;
 import org.json.XML;
 import org.opencds.vmr.v1_0.schema.CDSInput;
-
+import org.opencds.vmr.v1_0.schema.EvaluatedPerson;
+import org.opencds.vmr.v1_0.schema.EvaluatedPerson.ClinicalStatements;
+import org.opencds.vmr.v1_0.schema.EvaluatedPerson.ClinicalStatements.SubstanceAdministrationEvents;
+import org.opencds.vmr.v1_0.schema.SubstanceAdministrationEvent;
+import org.opencds.vmr.v1_0.schema.VMR;
 /**
  * @author sdn
  */
@@ -23,9 +29,9 @@ public class Fhir2Vmr {
     protected PatientConverter patientConverter = new PatientConverter();
 
     /**
-     * Convert string into a JSONObject. This is used to validate fhir elements later and ensure
-     * that the data has the appropriate properties. The string object can be either json or xml
-     * formatted data.
+     * Convert string into a JSONObject. This is used to validate fhir elements
+     * later and ensure that the data has the appropriate properties. The string
+     * object can be either json or xml formatted data.
      * 
      * @param String data the data to convert to a JSONObject
      * @return a json object containing the data in String data
@@ -35,11 +41,11 @@ public class Fhir2Vmr {
             final String METHODNAME = "Fhir2Vmr ";
             logger.debug(METHODNAME, "payload=", data);
         }
-        
+
         // the data may be in xml, if so, convert to json
         if (data.startsWith("<")) {
             return XML.toJSONObject(data);
-        } 
+        }
 
         JSONObject json = new JSONObject(data);
         return json;
@@ -63,11 +69,12 @@ public class Fhir2Vmr {
     }
 
     /**
-     * Convert fhir data as json object into cds formatted data. This uses several converter objects to 
-     * convert each respective structure definition.
+     * Convert fhir data as json object into cds formatted data. This uses several
+     * converter objects to convert each respective structure definition.
      * 
-     * @param CdsInputWrapper wrapper : the wrapper object that will be returned containing the json data
-     * @param JSONObject fhirElement : the fhir data converted to a json object
+     * @param CdsInputWrapper wrapper : the wrapper object that will be returned
+     *                        containing the json data
+     * @param JSONObject      fhirElement : the fhir data converted to a json object
      * @return CDSInput element containing the data in the fhir json object
      */
     public CDSInput getCdsInputFromFhir(CdsInputWrapper wrapper, JSONObject fhirElement) {
@@ -84,12 +91,12 @@ public class Fhir2Vmr {
             if (object.has("name") && object.has("resource")) {
                 // this should be a primitive
                 switch (object.getString("name")) {
-                    case "immunization" :
+                    case "immunization":
                         // convert immunization data
                         wrapper = this.immunizationConverter.convertToCds(wrapper, object.getJSONObject("resource"));
                         break;
 
-                    case "patient" :
+                    case "patient":
                         // convert patient data
                         wrapper = this.patientConverter.convertToCds(wrapper, object.getJSONObject("resource"));
                         break;
@@ -98,6 +105,29 @@ public class Fhir2Vmr {
         }
 
         return wrapper.getCdsObject();
+    }
+
+    public CDSInput getCdsInputFromFhir(Patient patient, List<Immunization> immunizations) {
+        CDSInput input = new CDSInput();
+        VMR vmr = new VMR();
+        ClinicalStatements clinicalStatements = new ClinicalStatements();
+        SubstanceAdministrationEvents substanceAdministrationEvents = new SubstanceAdministrationEvents();
+
+        clinicalStatements.setSubstanceAdministrationEvents(substanceAdministrationEvents);
+
+        for (Immunization immunization : immunizations) {
+            SubstanceAdministrationEvent event = this.immunizationConverter.convertToCds(immunization);
+            substanceAdministrationEvents.getSubstanceAdministrationEvent().add(event);
+        }
+
+        EvaluatedPerson evaluatedPerson = this.patientConverter.convertToCds(patient);
+        evaluatedPerson.setClinicalStatements(clinicalStatements);
+
+        vmr.setPatient(evaluatedPerson);
+
+        input.setVmrInput(vmr);
+
+        return input;
     }
 
     /**
