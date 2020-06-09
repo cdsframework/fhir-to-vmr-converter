@@ -8,12 +8,15 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.util.Date;
 
 import org.cdsframework.cds.vmr.CdsInputWrapper;
 import org.cdsframework.ice.input.IceCdsInputWrapper;
 import org.hl7.fhir.r4.model.Enumerations;
+import org.hl7.fhir.r4.model.Enumerations.AdministrativeGender;
 import org.hl7.fhir.r4.model.Patient;
 import org.json.JSONObject;
 import org.junit.Before;
@@ -146,5 +149,30 @@ public class PatientConverterTest {
         assertEquals(birthdate.getMonthValue(), 1);
         assertEquals(birthdate.getDayOfMonth(), 20);
         assertEquals(patient.getGender(), Enumerations.AdministrativeGender.MALE);
+    }
+
+    @Test
+    public void convertToCdsSetsEvaluatedPersonCorrectly() throws ParseException {
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyymmdd");
+        Date birthDate = dateFormat.parse("20200608");
+
+        SimpleDateFormat expectedDateFormat = new SimpleDateFormat("EEE MMM dd HH:mm:ss z yyyy");
+
+        AdministrativeGender gender = AdministrativeGender.fromCode("male");
+
+        Patient patient = new Patient();
+        patient.setId("my id");
+        patient.setBirthDate(birthDate);
+        patient.setGender(gender);
+
+        EvaluatedPerson person = this.patientConverter.convertToCds(patient);
+        Date personDate = expectedDateFormat.parse(
+            person.getDemographics().getBirthTime().getValue()
+        );
+
+        assertTrue(person instanceof EvaluatedPerson);
+        assertEquals("male", person.getDemographics().getGender().getCode());
+        assertEquals(personDate, birthDate);
+        assertEquals("my id", person.getId().getRoot());
     }
 }

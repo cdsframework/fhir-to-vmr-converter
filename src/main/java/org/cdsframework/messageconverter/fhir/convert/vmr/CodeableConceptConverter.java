@@ -24,4 +24,24 @@ public class CodeableConceptConverter implements CDConverter<CodeableConcept> {
 
         return codeableConcept;
     }
+
+    /**
+     * Convert a FHIR compliant CodeableConcept object into an Open CDS compliant
+     * CD object.
+     *
+     * @param CodeableConcept concept : FHIR compliant CodeableConcept object
+     * @return CD
+     */
+    public CD convertToCds(CodeableConcept concept) {
+        CD cd = new CD();
+
+        // it's possible for a concept to have multiple codings
+        // but CD only saves one so for simplicity, we use the first
+        Coding coding = concept.getCodingFirstRep();
+
+        cd.setCode(coding.getCode());
+        cd.setDisplayName(coding.getDisplay());
+
+        return cd;
+    }
 }

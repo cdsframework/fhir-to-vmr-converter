@@ -13,6 +13,8 @@ import java.util.List;
 import org.cdsframework.cds.vmr.CdsInputWrapper;
 import org.cdsframework.ice.input.IceCdsInputWrapper;
 import org.cdsframework.util.support.cds.Config;
+import org.hl7.fhir.r4.model.CodeableConcept;
+import org.hl7.fhir.r4.model.Coding;
 import org.hl7.fhir.r4.model.Immunization;
 import org.json.JSONObject;
 import org.junit.Before;
@@ -185,5 +187,23 @@ public class ImmunizationConverterTest {
 
         Immunization immunization = this.immunizationConverter.convertToFhir(event);
         assertFalse(immunization.getVaccineCode().isEmpty());
+    }
+
+    @Test
+    public void convertToCdsSetsCorrectData() {
+        CodeableConcept code = new CodeableConcept();
+        Coding coding = new Coding();
+
+        coding.setCode("immcode");
+        code.addCoding(coding);
+
+        Immunization immunization = new Immunization();
+        immunization.setVaccineCode(code);
+
+        SubstanceAdministrationEvent event = this.immunizationConverter.convertToCds(immunization);
+
+        assertNotNull(event);
+        assertTrue(event instanceof SubstanceAdministrationEvent);
+        assertEquals("immcode", event.getSubstance().getSubstanceCode().getCode());
     }
 }

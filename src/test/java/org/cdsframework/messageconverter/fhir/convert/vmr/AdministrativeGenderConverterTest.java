@@ -2,9 +2,11 @@ package org.cdsframework.messageconverter.fhir.convert.vmr;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import org.cdsframework.messageconverter.fhir.convert.utils.CDComparison;
 import org.hl7.fhir.r4.model.Enumerations.AdministrativeGender;
 import org.junit.Before;
 import org.junit.Test;
@@ -15,6 +17,7 @@ import org.opencds.vmr.v1_0.schema.CD;
  */
 public class AdministrativeGenderConverterTest {
     protected AdministrativeGenderConverter administrativeGenderConverter = new AdministrativeGenderConverter();
+    protected CDComparison cdComparison = new CDComparison();
     protected CD code;
 
     @Before
@@ -59,5 +62,35 @@ public class AdministrativeGenderConverterTest {
 
         String code = this.administrativeGenderConverter.convertGenderCode(this.code);
         assertTrue(code.equals(""));
+    }
+
+    @Test
+    public void convertToCdsCreatesValidObject() {
+        AdministrativeGender gender = AdministrativeGender.fromCode("male");
+        CD code = this.administrativeGenderConverter.convertToCds(gender);
+
+        assertNotNull(code);
+        assertTrue(code instanceof CD);
+        assertEquals("male", code.getCode());
+    }
+
+    @Test
+    public void canConvertFromFhirToCdsBackToFhir() {
+        AdministrativeGender gender = AdministrativeGender.fromCode("male");
+
+        CD code = this.administrativeGenderConverter.convertToCds(gender);
+
+        AdministrativeGender duplicate = this.administrativeGenderConverter.convertToFhir(code);
+
+        assertEquals(gender, duplicate);
+    }
+
+    @Test
+    public void canConvertFromCdsToFhirBackToCds() {
+        AdministrativeGender gender = this.administrativeGenderConverter.convertToFhir(this.code);
+        CD duplicate = this.administrativeGenderConverter.convertToCds(gender);
+
+        assertNotNull(duplicate);
+        assertTrue(this.cdComparison.isEqual(this.code, duplicate));
     }
 }

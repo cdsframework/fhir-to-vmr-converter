@@ -9,6 +9,8 @@ import org.hl7.fhir.r4.model.CodeableConcept;
 import org.hl7.fhir.r4.model.Coding;
 import org.hl7.fhir.r4.model.Immunization;
 import org.json.JSONObject;
+import org.opencds.vmr.v1_0.schema.AdministrableSubstance;
+import org.opencds.vmr.v1_0.schema.CD;
 import org.opencds.vmr.v1_0.schema.SubstanceAdministrationEvent;
 
 import ca.uhn.fhir.context.FhirContext;
@@ -21,6 +23,26 @@ import ca.uhn.fhir.parser.StrictErrorHandler;
 public class ImmunizationConverter implements CdsConverter, JsonToFhirConverter {
     protected CodeableConceptConverter codeableConceptConverter = new CodeableConceptConverter();
     private final LogUtils logger = LogUtils.getLogger(ImmunizationConverter.class);
+
+    /**
+     * Convert a FHIR compliant Immunization object into a SubstanceAdministrationEvent
+     * object for OpenCDS
+     *
+     * @param Immunization immunization : the FHIR compliant Immunization object
+     * @return SubstanceAdministrationEvent
+     */
+    public SubstanceAdministrationEvent convertToCds(Immunization immunization) {
+        SubstanceAdministrationEvent event = new SubstanceAdministrationEvent();
+        AdministrableSubstance substance = new AdministrableSubstance();
+        
+        CD code = this.codeableConceptConverter.convertToCds(immunization.getVaccineCode());
+
+        substance.setSubstanceCode(code);
+
+        event.setSubstance(substance);
+
+        return event;
+    }
 
     /**
      * Convert a json object of fhir data to cds format. Save the results to the ice cds input wrapper.
