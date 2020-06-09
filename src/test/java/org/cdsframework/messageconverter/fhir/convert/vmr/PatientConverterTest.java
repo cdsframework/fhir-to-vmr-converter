@@ -1,6 +1,7 @@
 package org.cdsframework.messageconverter.fhir.convert.vmr;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
@@ -8,12 +9,15 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.util.Date;
 
 import org.cdsframework.cds.vmr.CdsInputWrapper;
 import org.cdsframework.ice.input.IceCdsInputWrapper;
 import org.hl7.fhir.r4.model.Enumerations;
+import org.hl7.fhir.r4.model.Enumerations.AdministrativeGender;
 import org.hl7.fhir.r4.model.Patient;
 import org.json.JSONObject;
 import org.junit.Before;
@@ -146,5 +150,24 @@ public class PatientConverterTest {
         assertEquals(birthdate.getMonthValue(), 1);
         assertEquals(birthdate.getDayOfMonth(), 20);
         assertEquals(patient.getGender(), Enumerations.AdministrativeGender.MALE);
+    }
+
+    @Test
+    public void convertToCdsSetsEvaluatedPersonCorrectly() throws ParseException {
+        Date birthDate = new SimpleDateFormat("yyyymmdd").parse("20200608");
+        AdministrativeGender gender = AdministrativeGender.fromCode("male");
+
+        Patient patient = new Patient();
+        patient.setId("my id");
+        patient.setBirthDate(birthDate);
+        patient.setGender(gender);
+
+        EvaluatedPerson person = this.patientConverter.convertToCds(patient);
+
+        assertNotNull(person);
+        assertTrue(person instanceof EvaluatedPerson);
+        assertEquals("male", person.getDemographics().getGender().getCode());
+        assertEquals("Wed Jan 08 00:06:00 EST 2020", person.getDemographics().getBirthTime().getValue());
+        assertEquals("my id", person.getId().getRoot());
     }
 }

@@ -13,8 +13,12 @@ import org.hl7.fhir.r4.model.HumanName;
 import org.hl7.fhir.r4.model.Patient;
 import org.hl7.fhir.r4.model.StringType;
 import org.json.JSONObject;
+import org.opencds.vmr.v1_0.schema.CD;
 import org.opencds.vmr.v1_0.schema.CDSOutput;
 import org.opencds.vmr.v1_0.schema.EvaluatedPerson;
+import org.opencds.vmr.v1_0.schema.EvaluatedPerson.Demographics;
+import org.opencds.vmr.v1_0.schema.II;
+import org.opencds.vmr.v1_0.schema.TS;
 import org.opencds.vmr.v1_0.schema.VMR;
 
 import ca.uhn.fhir.context.FhirContext;
@@ -26,6 +30,7 @@ import ca.uhn.fhir.parser.StrictErrorHandler;
  */
 public class PatientConverter implements CdsConverter, JsonToFhirConverter {
     protected AdministrativeGenderConverter administrativeGenderConverter = new AdministrativeGenderConverter();
+    protected CodeableConceptConverter codeableConceptConverter = new CodeableConceptConverter();
 
     /**
      * Convert a json object of fhir data to cds format. Save the results to the ice
@@ -39,6 +44,27 @@ public class PatientConverter implements CdsConverter, JsonToFhirConverter {
     public IceCdsInputWrapper convertToCds(IceCdsInputWrapper wrapper, JSONObject data) {
         this.convertToCds(wrapper.getCdsInputWrapper(), data);
         return wrapper;
+    }
+
+    public EvaluatedPerson convertToCds(Patient patient) {
+        EvaluatedPerson person = new EvaluatedPerson();
+        Demographics demographics = new Demographics();
+
+        CD gender = this.administrativeGenderConverter.convertToCds(patient.getGender());
+        TS birthTime = new TS();
+        II id = new II();
+
+        id.setRoot(patient.getId());
+
+        birthTime.setValue(patient.getBirthDate().toString());
+
+        demographics.setGender(gender);
+        demographics.setBirthTime(birthTime);
+
+        person.setDemographics(demographics);
+        person.setId(id);
+
+        return person;
     }
 
     /**

@@ -24,6 +24,21 @@ public class AdministrativeGenderConverter implements CDConverter<Administrative
     }
 
     /**
+     * Convert a fhir compliant administrative gender element into an opencds
+     * CD object.
+     * 
+     * @param AdministrativeGender gender : the FHIR compliant gender object
+     * @return CD
+     */
+    public CD convertToCds(AdministrativeGender gender) {
+        CD code = new CD();
+
+        code.setCode(gender.toCode());
+
+        return code;
+    }
+
+    /**
      * Convert a CD object into a recognizeable FHIR gender code.
      * 
      * @param CD code : the CD object containing the gender

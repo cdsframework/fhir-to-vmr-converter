@@ -1,9 +1,11 @@
 package org.cdsframework.messageconverter.fhir.convert.vmr;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import org.hl7.fhir.r4.model.CodeableConcept;
+import org.hl7.fhir.r4.model.Coding;
 import org.junit.Before;
 import org.junit.Test;
 import org.opencds.vmr.v1_0.schema.CD;
@@ -33,5 +35,23 @@ public class CodeableConceptConverterTest {
         CodeableConcept code = this.codeableConceptConverter.convertToFhir(this.code);
         assertEquals(code.getCoding().get(0).getCode(), "cft");
         assertEquals(code.getCoding().get(0).getDisplay(), "Code for test");
+    }
+
+    @Test
+    public void convertToCdsHasCorrectData() {
+        CodeableConcept code = new CodeableConcept();
+        Coding coding = new Coding();
+
+        coding.setCode("mc");
+        coding.setDisplay("my code");
+        
+        code.addCoding(coding);
+
+        CD cd = this.codeableConceptConverter.convertToCds(code);
+
+        assertNotNull(cd);
+        assertTrue(cd instanceof CD);
+        assertEquals("mc", cd.getCode());
+        assertEquals("my code", cd.getDisplayName());
     }
 }
