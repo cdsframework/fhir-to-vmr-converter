@@ -22,6 +22,7 @@ public class CodeableConceptConverterTest {
         this.code = new CD();
         this.code.setCode("cft");
         this.code.setDisplayName("Code for test");
+        this.code.setCodeSystem("code system");
     }
 
     @Test
@@ -35,6 +36,7 @@ public class CodeableConceptConverterTest {
         CodeableConcept code = this.codeableConceptConverter.convertToFhir(this.code);
         assertEquals(code.getCoding().get(0).getCode(), "cft");
         assertEquals(code.getCoding().get(0).getDisplay(), "Code for test");
+        assertEquals(code.getCoding().get(0).getSystem(), "code system");
     }
 
     @Test
@@ -44,6 +46,7 @@ public class CodeableConceptConverterTest {
 
         coding.setCode("mc");
         coding.setDisplay("my code");
+        coding.setSystem("my system");
         
         code.addCoding(coding);
 
@@ -53,5 +56,6 @@ public class CodeableConceptConverterTest {
         assertTrue(cd instanceof CD);
         assertEquals("mc", cd.getCode());
         assertEquals("my code", cd.getDisplayName());
+        assertEquals("my system", cd.getCodeSystem());
     }
 }

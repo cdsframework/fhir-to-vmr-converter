@@ -33,7 +33,7 @@ public class AdministrativeGenderConverter implements CDConverter<Administrative
     public CD convertToCds(AdministrativeGender gender) {
         CD code = new CD();
 
-        code.setCode(gender.toCode());
+        code.setCode(this.convertGenderCode(gender));
 
         return code;
     }
@@ -51,6 +51,29 @@ public class AdministrativeGenderConverter implements CDConverter<Administrative
 
             case "f" :
                 return "female";
+        }
+
+        return "";
+    }
+
+    /**
+     * This method converts a FHIR AdministrativeGender object into string that matches
+     * a CD code.
+     * 
+     * @param AdministrativeGender gender : the FHIR object containing the code
+     * @return String
+     */
+    public String convertGenderCode(AdministrativeGender gender) {
+        try {
+            switch (gender.toCode().toLowerCase()) {
+                case "male" :
+                    return "M";
+
+                case "female" :
+                    return "F";
+            }
+        } catch (NullPointerException exception) {
+            return "";
         }
 
         return "";

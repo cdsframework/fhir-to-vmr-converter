@@ -3,6 +3,7 @@ package org.cdsframework.messageconverter;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.BufferedReader;
@@ -12,10 +13,18 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 
 import org.cdsframework.cds.vmr.CdsInputWrapper;
 import org.cdsframework.cds.vmr.CdsObjectAssist;
 import org.cdsframework.ice.input.IceCdsInputWrapper;
+import org.hl7.fhir.r4.model.Enumerations.AdministrativeGender;
+import org.hl7.fhir.r4.model.Immunization;
+import org.hl7.fhir.r4.model.Patient;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.junit.Before;
@@ -30,9 +39,12 @@ public class Fhir2VmrTest {
     protected String fileContents;
     protected CdsInputWrapper wrapper;
     protected String defaultOutput;
+    protected Patient patient;
+    protected List<Immunization> observationResults = new ArrayList<Immunization>();
+    protected List<Immunization> substanceAdministrationEvents = new ArrayList<Immunization>();
 
     @Before
-    public void setUp() throws FileNotFoundException, IOException {
+    public void setUp() throws FileNotFoundException, IOException, ParseException {
         InputStream inputStream = new FileInputStream("src/test/resources/forecast.json");
         InputStreamReader inputStreamReader = new InputStreamReader(inputStream, StandardCharsets.UTF_8);
         BufferedReader br = new BufferedReader(inputStreamReader);
@@ -50,6 +62,19 @@ public class Fhir2VmrTest {
         this.fhir2Vmr = new Fhir2Vmr();
         this.fileContents = fileContents;
         this.defaultOutput = CdsObjectAssist.cdsObjectToString(this.wrapper.getCdsObject(), CDSInput.class);
+
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyymmdd");
+        Date birthDate = dateFormat.parse("20200612");
+
+        this.patient = new Patient();
+        this.patient.setGender(AdministrativeGender.MALE);
+        this.patient.setBirthDate(birthDate);
+
+        Immunization immunization = new Immunization();
+        immunization.setId("nil");
+
+        this.observationResults.add(immunization);
+        this.substanceAdministrationEvents.add(immunization);
     }
 
     @Test
@@ -248,4 +273,52 @@ public class Fhir2VmrTest {
 
         assertNotEquals(this.defaultOutput, output);    
     }
+
+    @Test
+    public void getCdsInputFromFhirPopulatesDemographicData() {
+        Patient patient = new Patient();
+
+        CDSInput noPatient = this.fhir2Vmr.getCdsInputFromFhir(patient);
+        CDSInput withPatient = this.fhir2Vmr.getCdsInputFromFhir(this.patient);
+
+        assertNotEquals(
+            CdsObjectAssist.cdsObjectToString(noPatient, CDSInput.class),
+            CdsObjectAssist.cdsObjectToString(withPatient, CDSInput.class)
+        );
+    }
+    
+    @Test
+    public void getCdsInputFromFhirPopulatesDemographicDataAndObservationResults() {
+        List<Immunization> observationResults = new ArrayList<Immunization>();
+
+        CDSInput noObservationResults = this.fhir2Vmr.getCdsInputFromFhir(this.patient, observationResults);
+        CDSInput withObservationResults = this.fhir2Vmr.getCdsInputFromFhir(this.patient, this.observationResults);
+
+        assertNotEquals(
+            CdsObjectAssist.cdsObjectToString(noObservationResults, CDSInput.class),
+            CdsObjectAssist.cdsObjectToString(withObservationResults, CDSInput.class)
+        );
+    }
+    
+    @Test
+    public void getCdsInputFromFhirPopulatesDemographicDataObservationResultsAndSubstanceAdministrationEvents() {
+        List<Immunization> substanceAdministrationEvents = new ArrayList<Immunization>();
+
+        CDSInput noSubstanceAdministrationEvents = this.fhir2Vmr.getCdsInputFromFhir(this.patient, substanceAdministrationEvents, this.observationResults);
+        CDSInput withSubstanceAdministrationEvents = this.fhir2Vmr.getCdsInputFromFhir(this.patient, this.substanceAdministrationEvents, this.observationResults);
+
+        assertNotEquals(
+            CdsObjectAssist.cdsObjectToString(noSubstanceAdministrationEvents, CDSInput.class),
+            CdsObjectAssist.cdsObjectToString(withSubstanceAdministrationEvents, CDSInput.class)
+        );
+    }
+    
+    @Test
+    public void getCdsInputFromFhirDoesNotAddSubstanceAdministrationEventsIfNoImmunizations() {
+        List<Immunization> substanceAdministrationEvents = new ArrayList<Immunization>();
+
+        CDSInput input = this.fhir2Vmr.getCdsInputFromFhir(this.patient, substanceAdministrationEvents, this.observationResults);
+
+        assertNull(input.getVmrInput().getPatient().getClinicalStatements().getSubstanceAdministrationEvents());  
+    }    
 }
