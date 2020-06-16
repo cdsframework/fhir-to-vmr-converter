@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<ns3:cdsInput xmlns:ns2="org.opencds.vmr.v1_0.schema.vmr" xmlns:ns3="org.opencds.vmr.v1_0.schema.cdsinput">
+    <templateId root="2.16.840.1.113883.3.795.11.1.1"/>
+    <cdsContext>
+        <cdsSystemUserPreferredLanguage code="en" codeSystem="2.16.840.1.113883.6.99" displayName="English"/>
+    </cdsContext>
+    <vmrInput>
+        <templateId root="2.16.840.1.113883.3.795.11.1.1"/>
+        <patient>
+            <templateId root="2.16.840.1.113883.3.795.11.2.1.1"/>
+            <id root="2.16.840.1.113883.3.795.12.100.11" extension="3d3054efce25153b3ef219e5dd70b105"/>
+            <demographics>
+                <birthTime value="20100401"/>
+                <gender code="F" codeSystem="2.16.840.1.113883.5.1"/>
+            </demographics>
+            <clinicalStatements>
+                <observationResults/>
+                <substanceAdministrationEvents>
+                    <substanceAdministrationEvent>
+                        <templateId root="2.16.840.1.113883.3.795.11.9.1.1"/>
+                        <id root="2.16.840.1.113883.3.795.12.100.10" extension="c476851d249b7375adb3859b18959cbb"/>
+                        <substanceAdministrationGeneralPurpose code="384810002" codeSystem="2.16.840.1.113883.6.5"/>
+                        <substance>
+<id root="e871aea2-0a36-46f1-9e11-9cf43e346b60"/>
+<substanceCode code="133" codeSystem="2.16.840.1.113883.12.292"/>
+                        </substance>
+                        <administrationTimeInterval high="20100601" low="20100601"/>
+                    </substanceAdministrationEvent>
+                    <substanceAdministrationEvent>
+                        <templateId root="2.16.840.1.113883.3.795.11.9.1.1"/>
+                        <id root="2.16.840.1.113883.3.795.12.100.10" extension="e84c4fc3edd15ea36c3953a0333341d9"/>
+                        <substanceAdministrationGeneralPurpose code="384810002" codeSystem="2.16.840.1.113883.6.5"/>
+                        <substance>
+<id root="6a73fc3b-b6d4-4369-9d9d-6603c242b0c6"/>
+<substanceCode code="100" codeSystem="2.16.840.1.113883.12.292"/>
+                        </substance>
+                        <administrationTimeInterval high="20100601" low="20100601"/>
+                    </substanceAdministrationEvent>
+                </substanceAdministrationEvents>
+            </clinicalStatements>
+        </patient>
+    </vmrInput>
+</ns3:cdsInput>

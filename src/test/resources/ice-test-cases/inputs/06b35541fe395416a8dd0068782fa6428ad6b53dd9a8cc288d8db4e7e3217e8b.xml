@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<ns3:cdsInput xmlns:ns2="org.opencds.vmr.v1_0.schema.vmr" xmlns:ns3="org.opencds.vmr.v1_0.schema.cdsinput">>
+    <templateId root="2.16.840.1.113883.3.795.11.1.1"/>
+    <cdsContext>
+        <cdsSystemUserPreferredLanguage code="en" codeSystem="2.16.840.1.113883.6.99" displayName="English"/>
+    </cdsContext>
+    <vmrInput>
+        <templateId root="2.16.840.1.113883.3.795.11.1.1"/>
+        <patient>
+            <templateId root="2.16.840.1.113883.3.795.11.2.1.1"/>
+            <id root="2.16.840.1.113883.3.795.12.100.11" extension="84065e83d886d25da036d0386d398a5c"/>
+            <demographics>
+                <birthTime value="20091007"/>
+                <gender code="M" codeSystem="2.16.840.1.113883.5.1"/>
+            </demographics>
+            <clinicalStatements>
+                <observationResults/>
+                <substanceAdministrationEvents>
+                    <substanceAdministrationEvent>
+                        <templateId root="2.16.840.1.113883.3.795.11.9.1.1"/>
+                        <id root="2.16.840.1.113883.3.795.12.100.10" extension="8cc4035ee4602b4ed70396c43c9a156b"/>
+                        <substanceAdministrationGeneralPurpose code="384810002" codeSystem="2.16.840.1.113883.6.5"/>
+                        <substance>
+<id root="dfe6762b-429a-4689-ab9d-fc6bb5f5aa96"/>
+<substanceCode code="28" codeSystem="2.16.840.1.113883.12.292"/>
+                        </substance>
+                        <administrationTimeInterval high="20091207" low="20091207"/>
+                    </substanceAdministrationEvent>
+                    <substanceAdministrationEvent>
+                        <templateId root="2.16.840.1.113883.3.795.11.9.1.1"/>
+                        <id root="2.16.840.1.113883.3.795.12.100.10" extension="9e69da51e74f5666d2fd3214b7f77081"/>
+                        <substanceAdministrationGeneralPurpose code="384810002" codeSystem="2.16.840.1.113883.6.5"/>
+                        <substance>
+<id root="3b3976eb-4dca-4351-b9a3-35b5af6c1523"/>
+<substanceCode code="28" codeSystem="2.16.840.1.113883.12.292"/>
+                        </substance>
+                        <administrationTimeInterval high="20100207" low="20100207"/>
+                    </substanceAdministrationEvent>
+                    <substanceAdministrationEvent>
+                        <templateId root="2.16.840.1.113883.3.795.11.9.1.1"/>
+                        <id root="2.16.840.1.113883.3.795.12.100.10" extension="8da21b626fe893f14b785676d0a43e61"/>
+                        <substanceAdministrationGeneralPurpose code="384810002" codeSystem="2.16.840.1.113883.6.5"/>
+                        <substance>
+<id root="080d2fa6-5f69-43b1-aae8-0090efd6195e"/>
+<substanceCode code="28" codeSystem="2.16.840.1.113883.12.292"/>
+                        </substance>
+                        <administrationTimeInterval high="20100407" low="20100407"/>
+                    </substanceAdministrationEvent>
+                    <substanceAdministrationEvent>
+                        <templateId root="2.16.840.1.113883.3.795.11.9.1.1"/>
+                        <id root="2.16.840.1.113883.3.795.12.100.10" extension="8fda50362bd6b3a138befb838f18a459"/>
+                        <substanceAdministrationGeneralPurpose code="384810002" codeSystem="2.16.840.1.113883.6.5"/>
+                        <substance>
+<id root="e7897beb-516d-43b4-9ac4-8dd294876606"/>
+<substanceCode code="28" codeSystem="2.16.840.1.113883.12.292"/>
+                        </substance>
+                        <administrationTimeInterval high="20110107" low="20110107"/>
+                    </substanceAdministrationEvent>
+                    <substanceAdministrationEvent>
+                        <templateId root="2.16.840.1.113883.3.795.11.9.1.1"/>
+                        <id root="2.16.840.1.113883.3.795.12.100.10" extension="3bbcbd4d826b5826334d367d7ff37ab5"/>
+                        <substanceAdministrationGeneralPurpose code="384810002" codeSystem="2.16.840.1.113883.6.5"/>
+                        <substance>
+<id root="02c43542-1eef-4eb2-a9ab-e87ae91d17f0"/>
+<substanceCode code="01" codeSystem="2.16.840.1.113883.12.292"/>
+                        </substance>
+                        <administrationTimeInterval high="20161006" low="20161006"/>
+                    </substanceAdministrationEvent>
+                    <substanceAdministrationEvent>
+                        <templateId root="2.16.840.1.113883.3.795.11.9.1.1"/>
+                        <id root="2.16.840.1.113883.3.795.12.100.10" extension="364f516f13e8f91fa7e88c251749bed8"/>
+                        <substanceAdministrationGeneralPurpose code="384810002" codeSystem="2.16.840.1.113883.6.5"/>
+                        <substance>
+<id root="df15d4af-7d76-408f-9779-25671077db1f"/>
+<substanceCode code="115" codeSystem="2.16.840.1.113883.12.292"/>
+                        </substance>
+                        <administrationTimeInterval high="20161102" low="20161102"/>
+                    </substanceAdministrationEvent>
+                </substanceAdministrationEvents>
+            </clinicalStatements>
+        </patient>
+    </vmrInput>
+</ns3:cdsInput>

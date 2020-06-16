@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<ns3:cdsInput xmlns:ns2="org.opencds.vmr.v1_0.schema.vmr" xmlns:ns3="org.opencds.vmr.v1_0.schema.cdsinput">>
+    <templateId root="2.16.840.1.113883.3.795.11.1.1"/>
+    <cdsContext>
+        <cdsSystemUserPreferredLanguage code="en" codeSystem="2.16.840.1.113883.6.99" displayName="English"/>
+    </cdsContext>
+    <vmrInput>
+        <templateId root="2.16.840.1.113883.3.795.11.1.1"/>
+        <patient>
+            <templateId root="2.16.840.1.113883.3.795.11.2.1.1"/>
+            <id root="2.16.840.1.113883.3.795.12.100.11" extension="5b84f0808bba3626ccc0448ea9308279"/>
+            <demographics>
+                <birthTime value="20160315"/>
+                <gender code="F" codeSystem="2.16.840.1.113883.5.1"/>
+            </demographics>
+            <clinicalStatements>
+                <observationResults/>
+                <substanceAdministrationEvents>
+                    <substanceAdministrationEvent>
+                        <templateId root="2.16.840.1.113883.3.795.11.9.1.1"/>
+                        <id root="2.16.840.1.113883.3.795.12.100.10" extension="540975f9952e07ca458db75e5dfdc9b4"/>
+                        <substanceAdministrationGeneralPurpose code="384810002" codeSystem="2.16.840.1.113883.6.5"/>
+                        <substance>
+<id root="28905f5b-99ee-45d5-8d9a-c240fde9239d"/>
+<substanceCode code="133" codeSystem="2.16.840.1.113883.12.292"/>
+                        </substance>
+                        <administrationTimeInterval high="20160515" low="20160515"/>
+                    </substanceAdministrationEvent>
+                    <substanceAdministrationEvent>
+                        <templateId root="2.16.840.1.113883.3.795.11.9.1.1"/>
+                        <id root="2.16.840.1.113883.3.795.12.100.10" extension="87bc8fc84cbebcea5814395fd1e6df25"/>
+                        <substanceAdministrationGeneralPurpose code="384810002" codeSystem="2.16.840.1.113883.6.5"/>
+                        <substance>
+<id root="9b415b0f-7254-4399-bd8a-1b7397ebd3a8"/>
+<substanceCode code="133" codeSystem="2.16.840.1.113883.12.292"/>
+                        </substance>
+                        <administrationTimeInterval high="20160715" low="20160715"/>
+                    </substanceAdministrationEvent>
+                    <substanceAdministrationEvent>
+                        <templateId root="2.16.840.1.113883.3.795.11.9.1.1"/>
+                        <id root="2.16.840.1.113883.3.795.12.100.10" extension="7e494d43819b52c82a77861c27cf082f"/>
+                        <substanceAdministrationGeneralPurpose code="384810002" codeSystem="2.16.840.1.113883.6.5"/>
+                        <substance>
+<id root="a832e7a5-a2d0-40eb-a578-e95a3d8ebc87"/>
+<substanceCode code="33" codeSystem="2.16.840.1.113883.12.292"/>
+                        </substance>
+                        <administrationTimeInterval high="20160914" low="20160914"/>
+                    </substanceAdministrationEvent>
+                    <substanceAdministrationEvent>
+                        <templateId root="2.16.840.1.113883.3.795.11.9.1.1"/>
+                        <id root="2.16.840.1.113883.3.795.12.100.10" extension="5d097d457ea42a335af151a392b609a9"/>
+                        <substanceAdministrationGeneralPurpose code="384810002" codeSystem="2.16.840.1.113883.6.5"/>
+                        <substance>
+<id root="f1e94349-d213-4090-a847-8df262d706ca"/>
+<substanceCode code="133" codeSystem="2.16.840.1.113883.12.292"/>
+                        </substance>
+                        <administrationTimeInterval high="20160915" low="20160915"/>
+                    </substanceAdministrationEvent>
+                </substanceAdministrationEvents>
+            </clinicalStatements>
+        </patient>
+    </vmrInput>
+</ns3:cdsInput>

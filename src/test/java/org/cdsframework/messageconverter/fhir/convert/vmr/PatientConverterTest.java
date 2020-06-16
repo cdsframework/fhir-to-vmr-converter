@@ -1,6 +1,8 @@
 package org.cdsframework.messageconverter.fhir.convert.vmr;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
@@ -15,8 +17,10 @@ import java.util.Date;
 
 import org.cdsframework.cds.vmr.CdsInputWrapper;
 import org.cdsframework.ice.input.IceCdsInputWrapper;
+import org.cdsframework.messageconverter.fhir.convert.utils.IdentifierFactory;
 import org.hl7.fhir.r4.model.Enumerations;
 import org.hl7.fhir.r4.model.Enumerations.AdministrativeGender;
+import org.hl7.fhir.r4.model.Identifier;
 import org.hl7.fhir.r4.model.Patient;
 import org.json.JSONObject;
 import org.junit.Before;
@@ -37,6 +41,7 @@ public class PatientConverterTest {
     protected JSONObject patient;
     protected PatientConverter patientConverter = new PatientConverter();
     protected EvaluatedPerson person;
+    protected IdentifierFactory identifierFactory = new IdentifierFactory();
 
     @Before
     public void setUp() throws IOException {
@@ -153,10 +158,8 @@ public class PatientConverterTest {
 
     @Test
     public void convertToCdsSetsEvaluatedPersonCorrectly() throws ParseException {
-        SimpleDateFormat dateFormat = new SimpleDateFormat("yyymmdd");
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyymmdd");
         Date birthDate = dateFormat.parse("20200608");
-
-        SimpleDateFormat expectedDateFormat = new SimpleDateFormat("EEE MMM dd HH:mm:ss z yyyy");
 
         AdministrativeGender gender = AdministrativeGender.fromCode("male");
 
@@ -166,13 +169,160 @@ public class PatientConverterTest {
         patient.setGender(gender);
 
         EvaluatedPerson person = this.patientConverter.convertToCds(patient);
-        Date personDate = expectedDateFormat.parse(
+        System.out.println(person.getDemographics().getBirthTime().getValue());
+        Date personDate = dateFormat.parse(
             person.getDemographics().getBirthTime().getValue()
         );
 
         assertTrue(person instanceof EvaluatedPerson);
-        assertEquals("male", person.getDemographics().getGender().getCode());
+        assertEquals("M", person.getDemographics().getGender().getCode());
         assertEquals(personDate, birthDate);
         assertEquals("my id", person.getId().getRoot());
+    }
+
+    @Test
+    public void convertToCdsSetsExtensionFromIdentifier() {
+        Patient patient = new Patient();
+        Identifier identifier = this.identifierFactory.create("idExtension", "extension");
+
+        patient.addIdentifier(identifier);
+
+        EvaluatedPerson person = this.patientConverter.convertToCds(patient);
+
+        assertEquals(person.getId().getExtension(), "extension");
+    }
+    
+    @Test
+    public void convertToCdsSetsGenderCodeSystemFromIdentifier() {
+        Patient patient = new Patient();
+        Identifier identifier = this.identifierFactory.create("genderCodeSystem", "code system");
+
+        patient.addIdentifier(identifier);
+
+        EvaluatedPerson person = this.patientConverter.convertToCds(patient);
+
+        assertEquals(person.getDemographics().getGender().getCodeSystem(), "code system");
+    }
+    
+    @Test
+    public void convertToCdsAddsTemplateIdFromIdenfitier() {
+        Patient patient = new Patient();
+        Identifier identifier = this.identifierFactory.create("templateId", "template id");
+
+        int random = (int)(Math.random() * (10 - 2 + 1) + 2);
+
+        for (int i = 0; i < random; i++) {
+            patient.addIdentifier(identifier);
+        }
+
+        EvaluatedPerson person = this.patientConverter.convertToCds(patient);
+
+        assertFalse(person.getTemplateId().isEmpty());
+        assertEquals(person.getTemplateId().size(), random);
+    }
+    
+    @Test
+    public void convertToCdsSetsBirthTime() throws ParseException {
+        Patient patient = new Patient();
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyymmdd");
+        Date birthDate = dateFormat.parse("20200615");
+        patient.setBirthDate(birthDate);
+
+        EvaluatedPerson person = this.patientConverter.convertToCds(patient);
+
+        assertNotNull(person.getDemographics().getBirthTime());
+    }
+    
+    @Test
+    public void convertToCdsDoesntSetBirthTimeIfNoBirthdate() {
+        Patient patient = new Patient();
+
+        EvaluatedPerson person = this.patientConverter.convertToCds(patient);
+
+        assertNull(person.getDemographics().getBirthTime());
+    }
+    
+    @Test
+    public void convertToFhirGenderNotAddedIfNoDemographics() throws ParseException {
+        EvaluatedPerson person = new EvaluatedPerson();
+        Patient patient = this.patientConverter.convertToFhir(person);
+
+        assertNull(patient.getGender());
+    }
+    
+    @Test
+    public void convertToFhirAddsNoGenderIdentifierIfNoDemographics() throws ParseException {
+        EvaluatedPerson person = new EvaluatedPerson();
+        Patient patient = this.patientConverter.convertToFhir(person);
+
+        assertTrue(patient.getIdentifier().isEmpty());
+    }
+    
+    @Test
+    public void convertToFhirSetsBirthDateFromBirthTime() throws ParseException {
+        EvaluatedPerson person = new EvaluatedPerson();
+        Demographics demographics = new Demographics();
+        TS birthTime = new TS();
+        birthTime.setValue("20200615");
+
+        demographics.setBirthTime(birthTime);
+
+        person.setDemographics(demographics);
+
+        Patient patient = this.patientConverter.convertToFhir(person);
+        assertNotNull(patient.getBirthDate());
+    }
+    
+    @Test
+    public void convertToFhirDoesntSetBirthDateIfNoBirthTime() throws ParseException {
+        EvaluatedPerson person = new EvaluatedPerson();
+
+        Patient patient = this.patientConverter.convertToFhir(person);
+        assertNull(patient.getBirthDate());
+    }
+    
+    @Test
+    public void convertToFhirAddsIdExtension() throws ParseException {
+        EvaluatedPerson person = new EvaluatedPerson();
+        II id = new II();
+        id.setExtension("extension");
+        id.setRoot("root");
+
+        person.setId(id);
+
+        Patient patient = this.patientConverter.convertToFhir(person);
+        assertFalse(patient.getIdentifier().isEmpty());
+    }
+
+    @Test
+    public void convertToFhirDoesntAddIdExtensionIfNoId() throws ParseException {
+        EvaluatedPerson person = new EvaluatedPerson();
+
+        Patient patient = this.patientConverter.convertToFhir(person);
+        assertTrue(patient.getIdentifier().isEmpty());
+    }
+
+    @Test
+    public void convertToFhirDoesntSetIdIfNoId() throws ParseException {
+        EvaluatedPerson person = new EvaluatedPerson();
+
+        Patient patient = this.patientConverter.convertToFhir(person);
+        assertNull(patient.getId());
+    }
+    
+    @Test
+    public void convertToFhirAddsIdentifiersForEachTemplateId() throws ParseException {
+        EvaluatedPerson person = new EvaluatedPerson();
+        II id = new II();
+
+        int random = (int)(Math.random() * (10 - 2 + 1) + 2);
+
+        for (int i = 0; i < random; i++) {
+            person.getTemplateId().add(id);
+        }
+
+        Patient patient = this.patientConverter.convertToFhir(person);
+
+        assertEquals(patient.getIdentifier().size(), random);
     }
 }

@@ -7,4 +7,5 @@
 .settings/
 .vscode/
 
-ice-test-cases/
+ice-test-cases/originals
+ice-test-cases/outputs

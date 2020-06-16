@@ -8,8 +8,12 @@ import java.util.List;
 import org.cdsframework.cds.vmr.CdsInputWrapper;
 import org.cdsframework.ice.input.IceCdsInputWrapper;
 import org.cdsframework.messageconverter.fhir.convert.utils.FhirConstants;
+import org.cdsframework.messageconverter.fhir.convert.utils.IdentifierFactory;
+import org.cdsframework.util.LogUtils;
+import org.hl7.fhir.r4.model.CodeableConcept;
 import org.hl7.fhir.r4.model.Enumerations.AdministrativeGender;
 import org.hl7.fhir.r4.model.HumanName;
+import org.hl7.fhir.r4.model.Identifier;
 import org.hl7.fhir.r4.model.Patient;
 import org.hl7.fhir.r4.model.StringType;
 import org.json.JSONObject;
@@ -31,6 +35,8 @@ import ca.uhn.fhir.parser.StrictErrorHandler;
 public class PatientConverter implements CdsConverter, JsonToFhirConverter {
     protected AdministrativeGenderConverter administrativeGenderConverter = new AdministrativeGenderConverter();
     protected CodeableConceptConverter codeableConceptConverter = new CodeableConceptConverter();
+    protected IdentifierFactory identifierFactory = new IdentifierFactory();
+    private final LogUtils logger = LogUtils.getLogger(ImmunizationConverter.class);
 
     /**
      * Convert a json object of fhir data to cds format. Save the results to the ice
@@ -58,15 +64,40 @@ public class PatientConverter implements CdsConverter, JsonToFhirConverter {
         Demographics demographics = new Demographics();
 
         CD gender = this.administrativeGenderConverter.convertToCds(patient.getGender());
-        TS birthTime = new TS();
         II id = new II();
 
         id.setRoot(patient.getId());
+        
+        // look for the identifier for id extension and gender code system
+        for (Identifier identifier : patient.getIdentifier()) {
+            CodeableConcept concept = identifier.getType();
 
-        birthTime.setValue(patient.getBirthDate().toString());
+            if (concept.getText() == "idExtension") {
+                id.setExtension(identifier.getValue());
+            } else if (concept.getText() == "genderCodeSystem") {
+                gender.setCodeSystem(identifier.getValue());
+            } else if (concept.getText() == "templateId") {
+                II templateId = new II();
+                templateId.setRoot(identifier.getValue());
+
+                person.getTemplateId().add(templateId);
+            }
+        }
+
+        try {
+            SimpleDateFormat birthDateFormat = new SimpleDateFormat("yyyymmdd");
+            TS birthTime = new TS();
+
+            birthTime.setValue(
+                birthDateFormat.format(patient.getBirthDate())
+            );
+
+            demographics.setBirthTime(birthTime);
+        } catch (NullPointerException exception) {
+            this.logger.debug("convertToCds", "Cannot get birth date");
+        }
 
         demographics.setGender(gender);
-        demographics.setBirthTime(birthTime);
 
         person.setDemographics(demographics);
         person.setId(id);
@@ -152,17 +183,40 @@ public class PatientConverter implements CdsConverter, JsonToFhirConverter {
      */
     public Patient convertToFhir(EvaluatedPerson person) throws IllegalArgumentException, ParseException {
         Patient patient = new Patient();
-        AdministrativeGender gender = this.administrativeGenderConverter.convertToFhir(
-            person.getDemographics().getGender()
-        );
 
-        Date birthdate = new SimpleDateFormat("yyyymmdd").parse(
-            person.getDemographics().getBirthTime().getValue()
-        );
+        try {
+            AdministrativeGender gender = this.administrativeGenderConverter.convertToFhir(
+                person.getDemographics().getGender()
+            );
+            Identifier genderSystem = this.identifierFactory.create("genderCodeSystem", person.getDemographics().getGender().getCodeSystem());
 
-        patient.setId(person.getId().getRoot());
-        patient.setGender(gender);
-        patient.setBirthDate(birthdate);
+            patient.addIdentifier(genderSystem);
+            patient.setGender(gender);
+        } catch (NullPointerException exception) {
+            this.logger.debug("convertToFhir", "No gender found in EvaluatedPerson");
+        }
+
+        try {
+            Date birthdate = new SimpleDateFormat("yyyymmdd").parse(
+                person.getDemographics().getBirthTime().getValue()
+            );
+            patient.setBirthDate(birthdate);
+        } catch (NullPointerException exception) {
+            this.logger.debug("convertToFhir", "No birthtime found in EvaluatedPerson");
+        }
+
+        for (II templateId : person.getTemplateId()) {
+            Identifier templateIdentifier = this.identifierFactory.create("templateId", templateId.getRoot());
+            patient.addIdentifier(templateIdentifier);
+        }
+
+        try {
+            Identifier id = this.identifierFactory.create("idExtension", person.getId().getExtension());
+            patient.setId(person.getId().getRoot());
+            patient.addIdentifier(id);
+        } catch (NullPointerException exception) {
+            this.logger.debug("convertToFhir", "No id found for person");
+        }
 
         return patient;
     }

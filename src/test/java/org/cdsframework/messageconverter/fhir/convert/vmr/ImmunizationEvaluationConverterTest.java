@@ -80,6 +80,7 @@ public class ImmunizationEvaluationConverterTest {
 
         substance.setSubstanceCode(code);
         event.setSubstance(substance);
+        event.setSubstanceAdministrationGeneralPurpose(code);
 
         ImmunizationEvaluation evaluation = this.immunizationEvaluationConverter.convertToFhir(patient, event);
 

@@ -20,6 +20,7 @@ public class CodeableConceptConverter implements CDConverter<CodeableConcept> {
 
         coding.setCode(code.getCode());
         coding.setDisplay(code.getDisplayName());
+        coding.setSystem(code.getCodeSystem());
         codeableConcept.addCoding(coding);     
 
         return codeableConcept;
@@ -41,6 +42,7 @@ public class CodeableConceptConverter implements CDConverter<CodeableConcept> {
 
         cd.setCode(coding.getCode());
         cd.setDisplayName(coding.getDisplay());
+        cd.setCodeSystem(coding.getSystem());
 
         return cd;
     }

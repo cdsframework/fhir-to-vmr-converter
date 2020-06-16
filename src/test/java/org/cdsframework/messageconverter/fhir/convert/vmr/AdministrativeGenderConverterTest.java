@@ -2,6 +2,7 @@ package org.cdsframework.messageconverter.fhir.convert.vmr;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -23,7 +24,7 @@ public class AdministrativeGenderConverterTest {
     @Before
     public void setUp() {
         this.code = new CD();
-        this.code.setCode("male");
+        this.code.setCode("M");
     }
 
     @Test
@@ -71,7 +72,7 @@ public class AdministrativeGenderConverterTest {
 
         assertNotNull(code);
         assertTrue(code instanceof CD);
-        assertEquals("male", code.getCode());
+        assertEquals("M", code.getCode());
     }
 
     @Test
@@ -92,5 +93,29 @@ public class AdministrativeGenderConverterTest {
 
         assertNotNull(duplicate);
         assertTrue(this.cdComparison.isEqual(this.code, duplicate));
+    }
+
+    @Test
+    public void convertGenderCodeGetsCode() {
+        AdministrativeGender gender = AdministrativeGender.fromCode("male");
+        String code = this.administrativeGenderConverter.convertGenderCode(gender);
+        
+        assertNotEquals(code, "");
+    }
+
+    @Test
+    public void convertGenderCodeGetsEmptyStringIfNoGender() {
+        AdministrativeGender gender = AdministrativeGender.NULL;
+        String code = this.administrativeGenderConverter.convertGenderCode(gender);
+        
+        assertEquals(code, "");
+    }
+
+    @Test
+    public void convertGenderCodeGetsEmptyStringIfUnknownCase() {
+        AdministrativeGender gender = AdministrativeGender.OTHER;
+        String code = this.administrativeGenderConverter.convertGenderCode(gender);
+        
+        assertEquals(code, "");        
     }
 }
