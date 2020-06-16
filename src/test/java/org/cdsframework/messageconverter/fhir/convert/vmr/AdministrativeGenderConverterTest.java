@@ -24,7 +24,7 @@ public class AdministrativeGenderConverterTest {
     @Before
     public void setUp() {
         this.code = new CD();
-        this.code.setCode("male");
+        this.code.setCode("M");
     }
 
     @Test
@@ -72,7 +72,7 @@ public class AdministrativeGenderConverterTest {
 
         assertNotNull(code);
         assertTrue(code instanceof CD);
-        assertEquals("male", code.getCode());
+        assertEquals("M", code.getCode());
     }
 
     @Test
