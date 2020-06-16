@@ -158,10 +158,8 @@ public class PatientConverterTest {
 
     @Test
     public void convertToCdsSetsEvaluatedPersonCorrectly() throws ParseException {
-        SimpleDateFormat dateFormat = new SimpleDateFormat("yyymmdd");
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyymmdd");
         Date birthDate = dateFormat.parse("20200608");
-
-        SimpleDateFormat expectedDateFormat = new SimpleDateFormat("EEE MMM dd HH:mm:ss z yyyy");
 
         AdministrativeGender gender = AdministrativeGender.fromCode("male");
 
@@ -171,12 +169,13 @@ public class PatientConverterTest {
         patient.setGender(gender);
 
         EvaluatedPerson person = this.patientConverter.convertToCds(patient);
-        Date personDate = expectedDateFormat.parse(
+        System.out.println(person.getDemographics().getBirthTime().getValue());
+        Date personDate = dateFormat.parse(
             person.getDemographics().getBirthTime().getValue()
         );
 
         assertTrue(person instanceof EvaluatedPerson);
-        assertEquals("male", person.getDemographics().getGender().getCode());
+        assertEquals("M", person.getDemographics().getGender().getCode());
         assertEquals(personDate, birthDate);
         assertEquals("my id", person.getId().getRoot());
     }
@@ -225,7 +224,7 @@ public class PatientConverterTest {
     @Test
     public void convertToCdsSetsBirthTime() throws ParseException {
         Patient patient = new Patient();
-        SimpleDateFormat dateFormat = new SimpleDateFormat("yyymmdd");
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyymmdd");
         Date birthDate = dateFormat.parse("20200615");
         patient.setBirthDate(birthDate);
 
