@@ -6,6 +6,8 @@ import org.json.JSONObject;
 /**
  * @author Brian Lamb
  */
-public interface JsonToFhirConverter {
+public interface FhirConverter <T, S extends DomainResource> {
+    public DomainResource convertToFhir(T data);
     public DomainResource convertToFhir(JSONObject data);
+    public T convertToCds(S resource);
 }

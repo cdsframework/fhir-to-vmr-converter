@@ -97,13 +97,6 @@ public class PatientConverterTest {
         assertNull(patient.getGender());
     }
 
-    @Test(expected = ParseException.class)
-    public void convertToFhirFailsIfBadBirthdate() throws ParseException {
-        Demographics demographics = this.createDemographics("male", "sasdfas");
-        this.person.setDemographics(demographics);
-        this.patientConverter.convertToFhir(this.person);
-    }
-
     @Test
     public void convertToCdsSetsDataCorrectly() {
         this.wrapper = this.patientConverter.convertToCds(this.wrapper, this.patient);

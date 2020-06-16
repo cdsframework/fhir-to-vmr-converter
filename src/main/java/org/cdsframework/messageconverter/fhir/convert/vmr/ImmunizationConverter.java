@@ -31,7 +31,7 @@ import ca.uhn.fhir.parser.StrictErrorHandler;
 /**
  * @author sdn
  */
-public class ImmunizationConverter implements CdsConverter, JsonToFhirConverter {
+public class ImmunizationConverter implements CdsConverter, FhirConverter<SubstanceAdministrationEvent, Immunization> {
     protected CodeableConceptConverter codeableConceptConverter = new CodeableConceptConverter();
     private final LogUtils logger = LogUtils.getLogger(ImmunizationConverter.class);
     protected IdentifierFactory identifierFactory = new IdentifierFactory();

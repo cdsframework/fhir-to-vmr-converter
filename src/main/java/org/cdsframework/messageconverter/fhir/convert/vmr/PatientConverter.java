@@ -32,7 +32,7 @@ import ca.uhn.fhir.parser.StrictErrorHandler;
 /**
  * @author Brian Lamb
  */
-public class PatientConverter implements CdsConverter, JsonToFhirConverter {
+public class PatientConverter implements CdsConverter, FhirConverter<EvaluatedPerson, Patient> {
     protected AdministrativeGenderConverter administrativeGenderConverter = new AdministrativeGenderConverter();
     protected CodeableConceptConverter codeableConceptConverter = new CodeableConceptConverter();
     protected IdentifierFactory identifierFactory = new IdentifierFactory();
@@ -181,7 +181,7 @@ public class PatientConverter implements CdsConverter, JsonToFhirConverter {
      * @param EvaluatedPerson person : the evaluated person from a VMR record
      * @return a patient object
      */
-    public Patient convertToFhir(EvaluatedPerson person) throws IllegalArgumentException, ParseException {
+    public Patient convertToFhir(EvaluatedPerson person) throws IllegalArgumentException {
         Patient patient = new Patient();
 
         try {
@@ -203,6 +203,8 @@ public class PatientConverter implements CdsConverter, JsonToFhirConverter {
             patient.setBirthDate(birthdate);
         } catch (NullPointerException exception) {
             this.logger.debug("convertToFhir", "No birthtime found in EvaluatedPerson");
+        } catch (ParseException exception) {
+            this.logger.debug("convertToFhir", "No birthtime in EvaluatedPerson is improperly formatted");
         }
 
         for (II templateId : person.getTemplateId()) {

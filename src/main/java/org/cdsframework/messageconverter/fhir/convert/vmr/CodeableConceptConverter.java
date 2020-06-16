@@ -7,7 +7,7 @@ import org.opencds.vmr.v1_0.schema.CD;
 /**
  * @author Brian Lamb
  */
-public class CodeableConceptConverter implements CDConverter<CodeableConcept> {
+public class CodeableConceptConverter implements CodeConverter<CodeableConcept> {
     /**
      * Convert a CD object into a CodeableConcept.
      * 
