@@ -7,7 +7,7 @@ import org.opencds.vmr.v1_0.schema.CD;
 /**
  * @author Brian Lamb
  */
-public class AdministrativeGenderConverter implements CDConverter<AdministrativeGender> {
+public class AdministrativeGenderConverter implements CodeConverter<AdministrativeGender> {
     /**
      * Convert a CD object into AdministrativeGender.
      * 

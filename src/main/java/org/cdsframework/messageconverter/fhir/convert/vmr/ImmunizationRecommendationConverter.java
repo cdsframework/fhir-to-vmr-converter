@@ -1,7 +1,5 @@
 package org.cdsframework.messageconverter.fhir.convert.vmr;
 
-import java.text.ParseException;
-
 import org.cdsframework.util.LogUtils;
 import org.hl7.fhir.r4.model.CodeableConcept;
 import org.hl7.fhir.r4.model.ImmunizationRecommendation;
@@ -15,7 +13,7 @@ import org.opencds.vmr.v1_0.schema.SubstanceAdministrationProposal;
 /**
  * @author Brian Lamb
  */
-public class ImmunizationRecommendationConverter implements CdsToFhirConverter {
+public class ImmunizationRecommendationConverter {
     protected CodeableConceptConverter codeableConceptConverter = new CodeableConceptConverter();
     protected ImmunizationConverter immunizationConverter = new ImmunizationConverter();
     protected PatientConverter patientConverter = new PatientConverter();
@@ -39,8 +37,6 @@ public class ImmunizationRecommendationConverter implements CdsToFhirConverter {
         } catch (NullPointerException exception) {
             logger.debug("convertToFhir", "Null pointer exception found when accessing patient record");
             return recommendation;
-        } catch (ParseException exception) {
-            logger.debug("convertToFhir", "Improperly formatted patient date.");
         } catch (IllegalArgumentException exception) {
             logger.debug("convertToFhir", "Unknown gender code");
         }   
