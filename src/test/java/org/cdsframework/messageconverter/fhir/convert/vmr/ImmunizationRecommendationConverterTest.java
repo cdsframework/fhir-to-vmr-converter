@@ -356,7 +356,7 @@ public class ImmunizationRecommendationConverterTest {
             this.proposal
         );
 
-        assertEquals(1, recommendation.getRecommendation());
+        assertEquals(1, recommendation.getRecommendation().size());
     }
 
     @Test
