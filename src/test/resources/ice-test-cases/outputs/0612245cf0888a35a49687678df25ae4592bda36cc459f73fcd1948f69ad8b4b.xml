@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<ns4:cdsOutput xmlns:ns2="org.cdsframework.util.support.data.cds.testcase" xmlns:ns3="org.opencds.vmr.v1_0.schema.cdsinput" xmlns:ns4="org.opencds.vmr.v1_0.schema.cdsoutput">
+    <vmrOutput>
+        <templateId root="2.16.840.1.113883.3.795.11.1.1"/>
+        <patient>
+            <templateId root="2.16.840.1.113883.3.795.11.2.1.1"/>
+            <id root="2.16.840.1.113883.3.795.12.100.11" extension="5b84f0808bba3626ccc0448ea9308279"/>
+            <demographics>
+                <birthTime value="20160315"/>
+                <gender code="F" codeSystem="2.16.840.1.113883.5.1"/>
+            </demographics>
+            <clinicalStatements>
+                <observationResults/>
+                <substanceAdministrationEvents>
+                    <substanceAdministrationEvent>
+                        <templateId root="2.16.840.1.113883.3.795.11.9.1.1"/>
+                        <id root="2.16.840.1.113883.3.795.12.100.10" extension="540975f9952e07ca458db75e5dfdc9b4"/>
+                        <substanceAdministrationGeneralPurpose code="384810002" codeSystem="2.16.840.1.113883.6.5"/>
+                        <substance>
+                            <id root="6fde6742-7b84-429a-b600-8179cbb58ea6"/>
+                            <substanceCode code="133" codeSystem="2.16.840.1.113883.12.292"/>
+                        </substance>
+                        <administrationTimeInterval high="20160515" low="20160515"/>
+                        <relatedClinicalStatement>
+                            <targetRelationshipToSource code="PERT" codeSystem="2.16.840.1.113883.5.1002"/>
+                            <substanceAdministrationEvent>
+                                <templateId root="2.16.840.1.113883.3.795.11.9.1.1"/>
+                                <id root="f6106501-1a92-4ef7-9b60-6bdeb0eb4ef4"/>
+                                <substanceAdministrationGeneralPurpose code="384810002" codeSystem="2.16.840.1.113883.6.5"/>
+                                <substance>
+                                    <id root="92133cc4-038a-4c7d-9f56-7ea96e2c3b8a"/>
+                                    <substanceCode code="133" codeSystem="2.16.840.1.113883.12.292"/>
+                                </substance>
+                                <administrationTimeInterval high="20160515" low="20160515"/>
+                                <isValid value="true"/>
+                                <relatedClinicalStatement>
+                                    <targetRelationshipToSource code="PERT" codeSystem="2.16.840.1.113883.5.1002"/>
+                                    <observationResult>
+                                        <templateId root="2.16.840.1.113883.3.795.11.6.3.1"/>
+                                        <id root="026c3f56-99a1-4d42-90cd-dc010ce75821"/>
+                                        <observationFocus code="750" codeSystem="2.16.840.1.113883.3.795.12.100.1"/>
+                                        <observationValue>
+                                            <concept code="VALID" codeSystem="2.16.840.1.113883.3.795.12.100.2"/>
+                                        </observationValue>
+                                    </observationResult>
+                                </relatedClinicalStatement>
+                            </substanceAdministrationEvent>
+                        </relatedClinicalStatement>
+                    </substanceAdministrationEvent>
+                    <substanceAdministrationEvent>
+                        <templateId root="2.16.840.1.113883.3.795.11.9.1.1"/>
+                        <id root="2.16.840.1.113883.3.795.12.100.10" extension="87bc8fc84cbebcea5814395fd1e6df25"/>
+                        <substanceAdministrationGeneralPurpose code="384810002" codeSystem="2.16.840.1.113883.6.5"/>
+                        <substance>
+                            <id root="1b05e05d-6742-4802-8e86-55498eb50ede"/>
+                            <substanceCode code="133" codeSystem="2.16.840.1.113883.12.292"/>
+                        </substance>
+                        <administrationTimeInterval high="20160715" low="20160715"/>
+                        <relatedClinicalStatement>
+                            <targetRelationshipToSource code="PERT" codeSystem="2.16.840.1.113883.5.1002"/>
+                            <substanceAdministrationEvent>
+                                <templateId root="2.16.840.1.113883.3.795.11.9.1.1"/>
+                                <id root="f805323e-06ae-4c97-b286-248f496804f4"/>
+                                <substanceAdministrationGeneralPurpose code="384810002" codeSystem="2.16.840.1.113883.6.5"/>
+                                <substance>
+                                    <id root="cd04a241-835b-45b4-8cf4-28d60da56b8c"/>
+                                    <substanceCode code="133" codeSystem="2.16.840.1.113883.12.292"/>
+                                </substance>
+                                <administrationTimeInterval high="20160715" low="20160715"/>
+                                <isValid value="true"/>
+                                <relatedClinicalStatement>
+                                    <targetRelationshipToSource code="PERT" codeSystem="2.16.840.1.113883.5.1002"/>
+                                    <observationResult>
+                                        <templateId root="2.16.840.1.113883.3.795.11.6.3.1"/>
+                                        <id root="f1df189c-42cd-432c-8d55-5239c0e954f1"/>
+                                        <observationFocus code="750" codeSystem="2.16.840.1.113883.3.795.12.100.1"/>
+                                        <observationValue>
+                                            <concept code="VALID" codeSystem="2.16.840.1.113883.3.795.12.100.2"/>
+                                        </observationValue>
+                                    </observationResult>
+                                </relatedClinicalStatement>
+                            </substanceAdministrationEvent>
+                        </relatedClinicalStatement>
+                    </substanceAdministrationEvent>
+                    <substanceAdministrationEvent>
+                        <templateId root="2.16.840.1.113883.3.795.11.9.1.1"/>
+                        <id root="2.16.840.1.113883.3.795.12.100.10" extension="7e494d43819b52c82a77861c27cf082f"/>
+                        <substanceAdministrationGeneralPurpose code="384810002" codeSystem="2.16.840.1.113883.6.5"/>
+                        <substance>
+                            <id root="023680b5-619e-48f6-9a16-68a57989d969"/>
+                            <substanceCode code="33" codeSystem="2.16.840.1.113883.12.292"/>
+                        </substance>
+                        <administrationTimeInterval high="20160914" low="20160914"/>
+                        <relatedClinicalStatement>
+                            <targetRelationshipToSource code="PERT" codeSystem="2.16.840.1.113883.5.1002"/>
+                            <substanceAdministrationEvent>
+                                <templateId root="2.16.840.1.113883.3.795.11.9.1.1"/>
+                                <id root="dbbde8e8-cf18-44e5-b08c-0a7990bf8db1"/>
+                                <substanceAdministrationGeneralPurpose code="384810002" codeSystem="2.16.840.1.113883.6.5"/>
+                                <substance>
+                                    <id root="fee286d7-27ba-4c66-baa1-63ae356e8dc5"/>
+                                    <substanceCode code="33" codeSystem="2.16.840.1.113883.12.292"/>
+                                </substance>
+                                <administrationTimeInterval high="20160914" low="20160914"/>
+                                <isValid value="false"/>
+                                <relatedClinicalStatement>
+                                    <targetRelationshipToSource code="PERT" codeSystem="2.16.840.1.113883.5.1002"/>
+                                    <observationResult>
+                                        <templateId root="2.16.840.1.113883.3.795.11.6.3.1"/>
+                                        <id root="1b7bafd8-173a-42a9-aa09-77cca9e00bce"/>
+                                        <observationFocus code="750" codeSystem="2.16.840.1.113883.3.795.12.100.1"/>
+                                        <observationValue>
+                                            <concept code="INVALID" codeSystem="2.16.840.1.113883.3.795.12.100.2"/>
+                                        </observationValue>
+                                        <interpretation code="BELOW_MINIMUM_AGE_VACCINE" codeSystem="2.16.840.1.113883.3.795.12.100.3"/>
+                                    </observationResult>
+                                </relatedClinicalStatement>
+                            </substanceAdministrationEvent>
+                        </relatedClinicalStatement>
+                    </substanceAdministrationEvent>
+                    <substanceAdministrationEvent>
+                        <templateId root="2.16.840.1.113883.3.795.11.9.1.1"/>
+                        <id root="2.16.840.1.113883.3.795.12.100.10" extension="5d097d457ea42a335af151a392b609a9"/>
+                        <substanceAdministrationGeneralPurpose code="384810002" codeSystem="2.16.840.1.113883.6.5"/>
+                        <substance>
+                            <id root="1e949326-a9d9-4ea6-b7f6-74b5c7aba6af"/>
+                            <substanceCode code="133" codeSystem="2.16.840.1.113883.12.292"/>
+                        </substance>
+                        <administrationTimeInterval high="20160915" low="20160915"/>
+                        <relatedClinicalStatement>
+                            <targetRelationshipToSource code="PERT" codeSystem="2.16.840.1.113883.5.1002"/>
+                            <substanceAdministrationEvent>
+                                <templateId root="2.16.840.1.113883.3.795.11.9.1.1"/>
+                                <id root="9e3a35d0-f04a-4db2-894c-8b0b9fceda6b"/>
+                                <substanceAdministrationGeneralPurpose code="384810002" codeSystem="2.16.840.1.113883.6.5"/>
+                                <substance>
+                                    <id root="8ff5b93e-c02f-4bcc-aef1-f6de7716bc45"/>
+                                    <substanceCode code="133" codeSystem="2.16.840.1.113883.12.292"/>
+                                </substance>
+                                <administrationTimeInterval high="20160915" low="20160915"/>
+                                <isValid value="true"/>
+                                <relatedClinicalStatement>
+                                    <targetRelationshipToSource code="PERT" codeSystem="2.16.840.1.113883.5.1002"/>
+                                    <observationResult>
+                                        <templateId root="2.16.840.1.113883.3.795.11.6.3.1"/>
+                                        <id root="3231bf68-5315-467b-a0d1-9f878d46f136"/>
+                                        <observationFocus code="750" codeSystem="2.16.840.1.113883.3.795.12.100.1"/>
+                                        <observationValue>
+                                            <concept code="VALID" codeSystem="2.16.840.1.113883.3.795.12.100.2"/>
+                                        </observationValue>
+                                    </observationResult>
+                                </relatedClinicalStatement>
+                            </substanceAdministrationEvent>
+                        </relatedClinicalStatement>
+                    </substanceAdministrationEvent>
+                </substanceAdministrationEvents>
+                <substanceAdministrationProposals>
+                    <substanceAdministrationProposal>
+                        <templateId root="2.16.840.1.113883.3.795.11.9.3.1"/>
+                        <id root="5d8ce5e1-f73e-425d-853c-dc5b9d9db6cf"/>
+                        <substanceAdministrationGeneralPurpose code="384810002" codeSystem="2.16.840.1.113883.6.5"/>
+                        <substance>
+                            <id root="0ca55e36-be43-41e6-bc36-e0091ca85a43"/>
+                            <substanceCode code="133" codeSystem="2.16.840.1.113883.12.292"/>
+                        </substance>
+                        <proposedAdministrationTimeInterval low="20170315"/>
+                        <relatedClinicalStatement>
+                            <targetRelationshipToSource code="RSON" codeSystem="2.16.840.1.113883.5.1002"/>
+                            <observationResult>
+                                <templateId root="2.16.840.1.113883.3.795.11.6.3.1"/>
+                                <id root="9458f835-9fe0-4f9a-a70d-7d1c99be0f42"/>
+                                <observationFocus code="750" codeSystem="2.16.840.1.113883.3.795.12.100.1"/>
+                                <observationValue>
+                                    <concept code="RECOMMENDED" codeSystem="2.16.840.1.113883.3.795.12.100.5"/>
+                                </observationValue>
+                                <interpretation code="DUE_NOW" codeSystem="2.16.840.1.113883.3.795.12.100.6"/>
+                            </observationResult>
+                        </relatedClinicalStatement>
+                    </substanceAdministrationProposal>
+                </substanceAdministrationProposals>
+            </clinicalStatements>
+        </patient>
+    </vmrOutput>
+</ns4:cdsOutput>

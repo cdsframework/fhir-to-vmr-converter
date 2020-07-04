@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<ns4:cdsOutput xmlns:ns2="org.cdsframework.util.support.data.cds.testcase" xmlns:ns3="org.opencds.vmr.v1_0.schema.cdsinput" xmlns:ns4="org.opencds.vmr.v1_0.schema.cdsoutput">
+    <vmrOutput>
+        <templateId root="2.16.840.1.113883.3.795.11.1.1"/>
+        <patient>
+            <templateId root="2.16.840.1.113883.3.795.11.2.1.1"/>
+            <id root="2.16.840.1.113883.3.795.12.100.11" extension="e16535116c9414572685bf6619c7c430"/>
+            <demographics>
+                <birthTime value="19980111"/>
+                <gender code="F" codeSystem="2.16.840.1.113883.5.1"/>
+            </demographics>
+            <clinicalStatements>
+                <observationResults/>
+                <substanceAdministrationProposals>
+                    <substanceAdministrationProposal>
+                        <templateId root="2.16.840.1.113883.3.795.11.9.3.1"/>
+                        <id root="f581330f-3a8b-4a0b-97cd-2e801440fd99"/>
+                        <substanceAdministrationGeneralPurpose code="384810002" codeSystem="2.16.840.1.113883.6.5"/>
+                        <substance>
+                            <id root="dc06f59f-5025-478b-bbdf-df4355a902c3"/>
+                            <substanceCode code="810" codeSystem="2.16.840.1.113883.3.795.12.100.1"/>
+                        </substance>
+                        <relatedClinicalStatement>
+                            <targetRelationshipToSource code="RSON" codeSystem="2.16.840.1.113883.5.1002"/>
+                            <observationResult>
+                                <templateId root="2.16.840.1.113883.3.795.11.6.3.1"/>
+                                <id root="6eae4fb8-9b3a-4565-8a63-1ae32bc20584"/>
+                                <observationFocus code="810" codeSystem="2.16.840.1.113883.3.795.12.100.1"/>
+                                <observationValue>
+                                    <concept code="CONDITIONAL" codeSystem="2.16.840.1.113883.3.795.12.100.5"/>
+                                </observationValue>
+                                <interpretation code="HIGH_RISK" codeSystem="2.16.840.1.113883.3.795.12.100.6"/>
+                            </observationResult>
+                        </relatedClinicalStatement>
+                    </substanceAdministrationProposal>
+                </substanceAdministrationProposals>
+            </clinicalStatements>
+        </patient>
+    </vmrOutput>
+</ns4:cdsOutput>

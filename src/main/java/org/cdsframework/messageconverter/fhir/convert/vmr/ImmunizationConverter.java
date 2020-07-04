@@ -3,6 +3,7 @@ package org.cdsframework.messageconverter.fhir.convert.vmr;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
 
 import org.cdsframework.cds.vmr.CdsInputWrapper;
 import org.cdsframework.ice.input.IceCdsInputWrapper;
@@ -18,6 +19,7 @@ import org.hl7.fhir.r4.model.Immunization;
 import org.json.JSONObject;
 import org.opencds.vmr.v1_0.schema.AdministrableSubstance;
 import org.opencds.vmr.v1_0.schema.CD;
+import org.opencds.vmr.v1_0.schema.EvaluatedPerson.ClinicalStatements.SubstanceAdministrationEvents;
 import org.opencds.vmr.v1_0.schema.II;
 import org.opencds.vmr.v1_0.schema.IVLTS;
 import org.opencds.vmr.v1_0.schema.ObservationResult;
@@ -33,6 +35,8 @@ import ca.uhn.fhir.parser.StrictErrorHandler;
  */
 public class ImmunizationConverter implements CdsConverter, FhirConverter<SubstanceAdministrationEvent, Immunization> {
     protected CodeableConceptConverter codeableConceptConverter = new CodeableConceptConverter();
+    protected ImmunizationStatusConverter immunizationStatusConverter = new ImmunizationStatusConverter();
+
     private final LogUtils logger = LogUtils.getLogger(ImmunizationConverter.class);
     protected IdentifierFactory identifierFactory = new IdentifierFactory();
 
@@ -95,6 +99,25 @@ public class ImmunizationConverter implements CdsConverter, FhirConverter<Substa
     }
 
     /**
+     * This method converts a list of immunizations into a SubstanceAdministrationEvents object. The
+     * immunizations are stored inside the SubstanceAdministrationEvent objects in the parent
+     * SubstanceAdministrationEvents object.
+     *
+     * @param List<Immunization> immunizations : FHIR immunization objects
+     * @return SubstanceAdministrationEvents
+     */
+    public SubstanceAdministrationEvents convertToCds(List<Immunization> immunizations) {
+        SubstanceAdministrationEvents events = new SubstanceAdministrationEvents();
+
+        for (Immunization immunization : immunizations) {
+            SubstanceAdministrationEvent event = this.convertToCds(immunization);
+            events.getSubstanceAdministrationEvent().add(event);
+        }
+
+        return events;
+    }
+
+    /**
      * Convert a FHIR compliant Immunization object into a SubstanceAdministrationEvent
      * object for OpenCDS
      *
@@ -107,6 +130,10 @@ public class ImmunizationConverter implements CdsConverter, FhirConverter<Substa
 
         II id = new II();
         id.setRoot(immunization.getId());
+
+        if (immunization.getStatus() != null) {
+            event.setIsValid(this.immunizationStatusConverter.convertToCds(immunization.getStatus()));
+        }
 
         try {
             II substanceId = new II();
@@ -161,11 +188,11 @@ public class ImmunizationConverter implements CdsConverter, FhirConverter<Substa
 
     /**
      * Convert a json object of fhir data to cds format. Save the results to the ice cds input wrapper.
-     * 
+     *
      * @param IceCdsInputWrapper wrapper : wrapper object, used to store immunization data
      * @param JSONObject data : a json object of fhir data
      * @return IceCdsInputWrapper object updated with fhir data
-     */    
+     */
     public IceCdsInputWrapper convertToCds(IceCdsInputWrapper wrapper, JSONObject data) {
         Immunization immunization = this.convertToFhir(data);
 
@@ -188,23 +215,23 @@ public class ImmunizationConverter implements CdsConverter, FhirConverter<Substa
                         c,
                         substanceCodeOid,
                         immunization.getOccurrenceDateTimeType().getValue(),
-                        root, 
+                        root,
                         Config.getCodeSystemOid("ADMINISTRATION_ID")
                     );
                 }
             }
         }
 
-        return wrapper;        
+        return wrapper;
     }
 
     /**
      * Convert a json object of fhir data to cds format. Save the results to the cds input wrapper.
-     * 
+     *
      * @param CdsInputWrapper wrapper : wrapper object, used to store immunization data
      * @param JSONObject data : a json object of fhir data
      * @return CdsInputWrapper object updated with fhir data
-     */    
+     */
     public CdsInputWrapper convertToCds(CdsInputWrapper wrapper, JSONObject data) {
         IceCdsInputWrapper iceInput = new IceCdsInputWrapper(wrapper);
         iceInput = this.convertToCds(iceInput, data);
@@ -215,10 +242,10 @@ public class ImmunizationConverter implements CdsConverter, FhirConverter<Substa
     /**
      * To make parsing the immunization data easier, convert to an immunization object to easily get
      * the data out.
-     * 
+     *
      * @param JSONObject data : the immunization fhir data
      * @return a immunization object populated via the fhir data
-     */    
+     */
     public Immunization convertToFhir(JSONObject data) {
         FhirContext ctx = FhirContext.forR4();
 
@@ -228,7 +255,7 @@ public class ImmunizationConverter implements CdsConverter, FhirConverter<Substa
 
         // get the string representation of the json object
         String str = data.toString();
-                
+
         // The following will throw a DataFormatException because of the StrictErrorHandler
         Immunization immunization = parser.parseResource(Immunization.class, str);
         return immunization;
@@ -239,6 +266,7 @@ public class ImmunizationConverter implements CdsConverter, FhirConverter<Substa
      * object. This converts all valid data into Immunization data.
      *
      * @param ObservationResult result : the OpenCDS object containing the immunization data
+     * @return Immunization
      */
     public Immunization convertToFhir(ObservationResult result) {
         Immunization immunization = new Immunization();
@@ -307,6 +335,10 @@ public class ImmunizationConverter implements CdsConverter, FhirConverter<Substa
         for (II templateId : event.getTemplateId()) {
             Identifier templateIdentifier = this.identifierFactory.create("templateId", templateId.getRoot());
             immunization.addIdentifier(templateIdentifier);
+        }
+
+        if (event.getIsValid() != null) {
+            immunization.setStatus(this.immunizationStatusConverter.convertToFhir(event.getIsValid()));
         }
 
         try {
