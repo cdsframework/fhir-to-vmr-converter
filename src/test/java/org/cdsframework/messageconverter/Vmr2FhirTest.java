@@ -24,6 +24,14 @@ import org.junit.Before;
 import org.junit.Test;
 import org.opencds.vmr.v1_0.schema.CDSInput;
 import org.opencds.vmr.v1_0.schema.CDSOutput;
+import org.opencds.vmr.v1_0.schema.EvaluatedPerson;
+import org.opencds.vmr.v1_0.schema.EvaluatedPerson.ClinicalStatements;
+import org.opencds.vmr.v1_0.schema.EvaluatedPerson.ClinicalStatements.SubstanceAdministrationEvents;
+import org.opencds.vmr.v1_0.schema.EvaluatedPerson.ClinicalStatements.SubstanceAdministrationProposals;
+import org.opencds.vmr.v1_0.schema.RelatedClinicalStatement;
+import org.opencds.vmr.v1_0.schema.SubstanceAdministrationEvent;
+import org.opencds.vmr.v1_0.schema.SubstanceAdministrationProposal;
+import org.opencds.vmr.v1_0.schema.VMR;
 
 /**
  * @author Brian Lamb
@@ -32,6 +40,7 @@ public class Vmr2FhirTest {
     protected Vmr2Fhir vmr2Fhir = new Vmr2Fhir();
     protected CDSOutput output;
     protected CDSInput input;
+    protected CDSOutput customOutput = new CDSOutput();
 
     @Before
     public void setUp() throws IOException {
@@ -40,20 +49,16 @@ public class Vmr2FhirTest {
 
         data = Files.readAllBytes(Paths.get("src/test/resources/vmrInput.xml"));
         this.input = CdsObjectAssist.cdsObjectFromByteArray(data, CDSInput.class);
-    }
 
-    @Test
-    public void getEvaluationsContainsListOfEvaluations() {
-        List<ImmunizationEvaluation> evaluations = this.vmr2Fhir.getEvaluations(this.output);
-        
-        assertFalse(evaluations.isEmpty());
-    }
+        ClinicalStatements clinicalStatements = new ClinicalStatements();
 
-    @Test
-    public void getRecommendationContainsRecommendations() {
-        ImmunizationRecommendation recommendation = this.vmr2Fhir.getRecommendation(this.output);
+        EvaluatedPerson patient = new EvaluatedPerson();
+        patient.setClinicalStatements(clinicalStatements);
 
-        assertFalse(recommendation.getRecommendation().isEmpty());
+        VMR vmr = new VMR();
+        vmr.setPatient(patient);
+
+        this.customOutput.setVmrOutput(vmr);
     }
 
     @Test
@@ -85,7 +90,7 @@ public class Vmr2FhirTest {
         List<Immunization> observations = this.vmr2Fhir.getObservations(this.input);
         assertTrue(observations.isEmpty());
     }
-    
+
     @Test
     public void getObservationsReturnsImmunizationPerObservationResult() {
         List<Immunization> observations = this.vmr2Fhir.getObservations(this.input);
@@ -94,7 +99,7 @@ public class Vmr2FhirTest {
             this.input.getVmrInput().getPatient().getClinicalStatements().getObservationResults().getObservationResult().size()
         );
     }
-    
+
     @Test
     public void getImmunizationsReturnsEmptyListIfNoSubstanceAdministrationEvents() {
         this.input.getVmrInput().getPatient().getClinicalStatements().setSubstanceAdministrationEvents(null);
@@ -102,12 +107,99 @@ public class Vmr2FhirTest {
         List<Immunization> events = this.vmr2Fhir.getImmunizations(this.input);
         assertTrue(events.isEmpty());
     }
-    
+
     @Test
     public void getPatientReturnsPopulatedPatientObject() throws ParseException {
         Patient patient = new Patient();
         Patient populated = this.vmr2Fhir.getPatient(this.input);
 
         assertNotEquals(patient, populated);
-    }    
+    }
+
+    @Test
+    public void getEvaluationsReturnsEmptyListIfNoSubstanceAdministrationEvents() throws ParseException {
+        List<ImmunizationEvaluation> evaluations = this.vmr2Fhir.getEvaluations(this.customOutput);
+
+        assertEquals(0, evaluations.size());
+    }
+
+    @Test
+    public void getEvaluationsReturnsEmptyListIfSubSubstanceAdministrationEventsHaveNoRelatedClinicalStatements() throws ParseException {
+        SubstanceAdministrationEvents substanceAdministrationEvents = new SubstanceAdministrationEvents();
+        this.customOutput.getVmrOutput().getPatient().getClinicalStatements().setSubstanceAdministrationEvents(substanceAdministrationEvents);
+
+        List<ImmunizationEvaluation> evaluations = this.vmr2Fhir.getEvaluations(this.customOutput);
+
+        assertEquals(0, evaluations.size());
+    }
+
+    @Test
+    public void getEvaluationsAddsEvaluationForEachRelatedClinicalStatement() throws ParseException {
+        SubstanceAdministrationEvents substanceAdministrationEvents = new SubstanceAdministrationEvents();
+        this.customOutput.getVmrOutput().getPatient().getClinicalStatements().setSubstanceAdministrationEvents(substanceAdministrationEvents);
+
+        SubstanceAdministrationEvent outerEvent = new SubstanceAdministrationEvent();
+        RelatedClinicalStatement outerStatement = new RelatedClinicalStatement();
+        SubstanceAdministrationEvent innerEvent = new SubstanceAdministrationEvent();
+        RelatedClinicalStatement innerStatement = new RelatedClinicalStatement();
+
+        outerEvent.getRelatedClinicalStatement().add(outerStatement);
+        outerEvent.getRelatedClinicalStatement().add(outerStatement);
+        outerStatement.setSubstanceAdministrationEvent(innerEvent);
+        innerEvent.getRelatedClinicalStatement().add(innerStatement);
+        innerEvent.getRelatedClinicalStatement().add(innerStatement);
+        innerEvent.getRelatedClinicalStatement().add(innerStatement);
+        substanceAdministrationEvents.getSubstanceAdministrationEvent().add(outerEvent);
+
+        List<ImmunizationEvaluation> evaluations = this.vmr2Fhir.getEvaluations(this.customOutput);
+
+        assertEquals(6, evaluations.size());
+    }
+
+    @Test
+    public void getRecommendationReturnsEmptyListIfNoProposals() throws IllegalArgumentException, ParseException {
+        SubstanceAdministrationProposals substanceAdministrationProposals = new SubstanceAdministrationProposals();
+        this.customOutput.getVmrOutput().getPatient().getClinicalStatements().setSubstanceAdministrationProposals(substanceAdministrationProposals);
+
+        List<ImmunizationRecommendation> recommendations = this.vmr2Fhir.getRecommendations(this.customOutput);
+
+        assertEquals(0, recommendations.size());
+    }
+
+    @Test
+    public void getRecommendationAddsRecommendationPerProposal() throws IllegalArgumentException, ParseException {
+        SubstanceAdministrationProposals substanceAdministrationProposals = new SubstanceAdministrationProposals();
+        this.customOutput.getVmrOutput().getPatient().getClinicalStatements().setSubstanceAdministrationProposals(substanceAdministrationProposals);
+
+        SubstanceAdministrationProposal proposal = new SubstanceAdministrationProposal();
+        substanceAdministrationProposals.getSubstanceAdministrationProposal().add(proposal);
+        substanceAdministrationProposals.getSubstanceAdministrationProposal().add(proposal);
+        substanceAdministrationProposals.getSubstanceAdministrationProposal().add(proposal);
+
+        List<ImmunizationRecommendation> recommendations = this.vmr2Fhir.getRecommendations(this.customOutput);
+
+        assertEquals(3, recommendations.size());
+    }
+
+    @Test
+    public void getImmunizationsReturnsEmptyListIfSubstanceAdministrationEventsHasNoSubstanceAdministrationEvents() {
+        List<Immunization> immunizations = this.vmr2Fhir.getImmunizations(this.customOutput);
+
+        assertEquals(0, immunizations.size());
+    }
+
+    @Test
+    public void getImmunizationsReturnsImmunizationForEachSubstanceAdministrationEvent() {
+        SubstanceAdministrationEvents substanceAdministrationEvents = new SubstanceAdministrationEvents();
+        this.customOutput.getVmrOutput().getPatient().getClinicalStatements().setSubstanceAdministrationEvents(substanceAdministrationEvents);
+
+        SubstanceAdministrationEvent event = new SubstanceAdministrationEvent();
+        substanceAdministrationEvents.getSubstanceAdministrationEvent().add(event);
+        substanceAdministrationEvents.getSubstanceAdministrationEvent().add(event);
+        substanceAdministrationEvents.getSubstanceAdministrationEvent().add(event);
+
+        List<Immunization> immunizations = this.vmr2Fhir.getImmunizations(this.customOutput);
+
+        assertEquals(3, immunizations.size());
+    }
 }

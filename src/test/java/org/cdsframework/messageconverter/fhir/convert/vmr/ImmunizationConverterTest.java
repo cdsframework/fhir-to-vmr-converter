@@ -11,6 +11,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -23,11 +24,14 @@ import org.hl7.fhir.r4.model.Coding;
 import org.hl7.fhir.r4.model.DateTimeType;
 import org.hl7.fhir.r4.model.Identifier;
 import org.hl7.fhir.r4.model.Immunization;
+import org.hl7.fhir.r4.model.Immunization.ImmunizationStatus;
 import org.json.JSONObject;
 import org.junit.Before;
 import org.junit.Test;
 import org.opencds.vmr.v1_0.schema.AdministrableSubstance;
+import org.opencds.vmr.v1_0.schema.BL;
 import org.opencds.vmr.v1_0.schema.CD;
+import org.opencds.vmr.v1_0.schema.EvaluatedPerson.ClinicalStatements.SubstanceAdministrationEvents;
 import org.opencds.vmr.v1_0.schema.II;
 import org.opencds.vmr.v1_0.schema.IVLTS;
 import org.opencds.vmr.v1_0.schema.ObservationResult;
@@ -146,7 +150,7 @@ public class ImmunizationConverterTest {
         String codeOid = Config.getCodeSystemOid("VACCINE");
         String administrationId = Config.getCodeSystemOid("ADMINISTRATION_ID");
         String id = "Immunization/" + this.immunization.getString("id") + "/_history/1";
-        
+
         for (SubstanceAdministrationEvent immunization : immunizations) {
             // check the things were set correctly
             assertEquals(code, immunization.getSubstance().getSubstanceCode().getCode());
@@ -157,7 +161,7 @@ public class ImmunizationConverterTest {
             assertEquals(id, immunization.getId().getRoot());
         }
     }
-    
+
     @Test
     public void convertToCdsWorksWithCdsInputWrapperTest() {
         CdsInputWrapper wrapper = this.immunizationConverter.convertToCds(this.wrapper.getCdsInputWrapper(), this.immunization);
@@ -166,17 +170,17 @@ public class ImmunizationConverterTest {
         assertEquals(1, immunizations.size());
 
     }
-    
+
     @Test
     public void convertToFhirCreatesImmunizationObjectTest() {
         Immunization immunization = this.immunizationConverter.convertToFhir(this.immunization);
-        assertTrue(immunization instanceof Immunization);        
+        assertTrue(immunization instanceof Immunization);
     }
-    
+
     @Test(expected = DataFormatException.class)
     public void convertToFhirFailsIfInvalidData() {
         JSONObject json = new JSONObject();
-        this.immunizationConverter.convertToFhir(json);        
+        this.immunizationConverter.convertToFhir(json);
     }
 
     @Test
@@ -190,7 +194,7 @@ public class ImmunizationConverterTest {
     public void convertToFhirCreatesImmunizationFromSubstanceAdministrationEvent() {
         SubstanceAdministrationEvent event = new SubstanceAdministrationEvent();
         AdministrableSubstance substance = new AdministrableSubstance();
-        
+
         CD code = new CD();
         code.setCode("jut");
         code.setDisplayName("Junit Test");
@@ -231,13 +235,13 @@ public class ImmunizationConverterTest {
         ObservationResult observationResult = this.immunizationConverter.convertToCdsObservation(immunization);
         assertTrue(observationResult.getTemplateId().isEmpty());
     }
-    
+
     @Test
     public void convertToCdsObservationAddsTemplateIdsForEachMatchingIdentifier() {
         Immunization immunization = new Immunization();
         Identifier templateId = this.identifierFactory.create("templateId", "random");
         Identifier notTemplateId = this.identifierFactory.create("notTemplateId", "random");
-        
+
         int random = (int)(Math.random() * (10 - 2 + 1) + 2);
 
         for (int i = 0; i < random; i++) {
@@ -249,27 +253,27 @@ public class ImmunizationConverterTest {
         assertFalse(observationResult.getTemplateId().isEmpty());
         assertEquals(observationResult.getTemplateId().size(), random);
     }
-    
+
     @Test
     public void convertToCdsObservationsDoesntAddTemplateIdIfNoTemplateIdIdentifier() {
         Immunization immunization = new Immunization();
-        Identifier notTemplateId = this.identifierFactory.create("notTemplateId", "random");        
+        Identifier notTemplateId = this.identifierFactory.create("notTemplateId", "random");
         immunization.addIdentifier(notTemplateId);
 
         ObservationResult observationResult = this.immunizationConverter.convertToCdsObservation(immunization);
-        assertTrue(observationResult.getTemplateId().isEmpty());    
+        assertTrue(observationResult.getTemplateId().isEmpty());
     }
-    
+
     @Test
     public void convertToCdsObservationAddsTemplateIdIfCorrectIdentifier() {
         Immunization immunization = new Immunization();
-        Identifier templateId = this.identifierFactory.create("templateId", "random");        
+        Identifier templateId = this.identifierFactory.create("templateId", "random");
         immunization.addIdentifier(templateId);
 
         ObservationResult observationResult = this.immunizationConverter.convertToCdsObservation(immunization);
         assertFalse(observationResult.getTemplateId().isEmpty());
     }
-    
+
     @Test
     public void convertToCdsObservationSetsId() {
         Immunization immunization = new Immunization();
@@ -278,7 +282,7 @@ public class ImmunizationConverterTest {
         ObservationResult observationResult = this.immunizationConverter.convertToCdsObservation(immunization);
         assertEquals(observationResult.getId().getRoot(), "testid");
     }
-    
+
     @Test
     public void convertToCdsObservationSetsObservationFocus() {
         CodeableConcept vaccineCode = new CodeableConcept();
@@ -298,14 +302,14 @@ public class ImmunizationConverterTest {
         observationResult = this.immunizationConverter.convertToCdsObservation(immunization);
         assertNotNull(observationResult.getObservationFocus().getCode());
     }
-    
+
     @Test
     public void convertToCdsObservationSilentlyFailsIfNoDateFound() {
         Immunization immunization = new Immunization();
         ObservationResult observationResult = this.immunizationConverter.convertToCdsObservation(immunization);
         assertNull(observationResult.getObservationEventTime());
     }
-    
+
     @Test
     public void convertToCdsObservationSetsHighAndLowToBeSame() throws ParseException {
         Date observationEventTime = this.dateFormat.parse("20200613");
@@ -321,7 +325,7 @@ public class ImmunizationConverterTest {
             observationResult.getObservationEventTime().getLow()
         );
     }
-    
+
     @Test
     public void convertToCdsObservationUsesDateTimeToSetEventTime() throws ParseException {
         Date observationEventTime = this.dateFormat.parse("20200613");
@@ -336,9 +340,9 @@ public class ImmunizationConverterTest {
 
         observationResult = this.immunizationConverter.convertToCdsObservation(immunization);
 
-        assertNotNull(observationResult.getObservationEventTime());        
+        assertNotNull(observationResult.getObservationEventTime());
     }
-    
+
     @Test
     public void convertToCdsObservationAddsNoInterpretationsIfNoReasonCodes() {
         Immunization immunization = new Immunization();
@@ -346,7 +350,7 @@ public class ImmunizationConverterTest {
 
         assertTrue(observationResult.getInterpretation().isEmpty());
     }
-    
+
     @Test
     public void convertToCdsObservationAddsInterpretationsForEachReasonCode() {
         Immunization immunization = new Immunization();
@@ -368,7 +372,7 @@ public class ImmunizationConverterTest {
         assertFalse(observationResult.getInterpretation().isEmpty());
         assertEquals(observationResult.getInterpretation().size(), random);
     }
-    
+
     @Test
     public void convertToCdsObservationSetsObservationValue() {
         Immunization immunization = new Immunization();
@@ -388,7 +392,7 @@ public class ImmunizationConverterTest {
 
         assertNotNull(observationResult.getObservationValue().getConcept().getCode());
     }
-    
+
     @Test
     public void convertToCdsSetsId() {
         Immunization immunization = new Immunization();
@@ -398,7 +402,7 @@ public class ImmunizationConverterTest {
 
         assertEquals(event.getId().getRoot(), "immid");
     }
-    
+
     @Test
     public void convertToCdsSetsSubstanceId() {
         Immunization immunization = new Immunization();
@@ -415,7 +419,7 @@ public class ImmunizationConverterTest {
 
         assertEquals(event.getSubstance().getId().getRoot(), "vaccid");
     }
-    
+
     @Test
     public void convertToCdsSetsAdministrationTimeInterval() throws ParseException {
         Immunization immunization = new Immunization();
@@ -430,7 +434,7 @@ public class ImmunizationConverterTest {
 
         assertNotNull(event.getAdministrationTimeInterval());
     }
-    
+
     @Test
     public void convertToCdsSetsTimeIntervalHighAndLowToBeTheSame() throws ParseException {
         Immunization immunization = new Immunization();
@@ -445,15 +449,15 @@ public class ImmunizationConverterTest {
             event.getAdministrationTimeInterval().getLow()
         );
     }
-    
+
     @Test
     public void convertToCdsSilentlyFailsIfNoDate() {
         Immunization immunization = new Immunization();
         SubstanceAdministrationEvent event = this.immunizationConverter.convertToCds(immunization);
 
-        assertNull(event.getAdministrationTimeInterval());       
+        assertNull(event.getAdministrationTimeInterval());
     }
-    
+
     @Test
     public void convertToCdsSetsNoTemplateIdOrExtensionIfNoIdentifiers() {
         Immunization immunization = new Immunization();
@@ -462,11 +466,11 @@ public class ImmunizationConverterTest {
         assertTrue(event.getTemplateId().isEmpty());
         assertEquals(event.getId().getExtension(), "");
     }
-    
+
     @Test
     public void convertToCdsSetsNoTemplateIdOrExtensionIfNoMatchingIdentifiers() {
         Immunization immunization = new Immunization();
-        Identifier notTemplateId = this.identifierFactory.create("notTemplateId", "random");        
+        Identifier notTemplateId = this.identifierFactory.create("notTemplateId", "random");
         immunization.addIdentifier(notTemplateId);
 
         SubstanceAdministrationEvent event = this.immunizationConverter.convertToCds(immunization);
@@ -474,24 +478,24 @@ public class ImmunizationConverterTest {
         assertTrue(event.getTemplateId().isEmpty());
         assertEquals(event.getId().getExtension(), "");
     }
-    
+
     @Test
     public void convertToCdsSetsTemplateIdForMatchingIdentifier() {
         Immunization immunization = new Immunization();
-        Identifier templateId = this.identifierFactory.create("templateId", "random");        
+        Identifier templateId = this.identifierFactory.create("templateId", "random");
         immunization.addIdentifier(templateId);
 
         SubstanceAdministrationEvent event = this.immunizationConverter.convertToCds(immunization);
 
         assertFalse(event.getTemplateId().isEmpty());
     }
-    
+
     @Test
     public void convertToCdsAddsTemplateIdForEachMatchingIdentifier() {
         Immunization immunization = new Immunization();
-        Identifier templateId = this.identifierFactory.create("templateId", "random");        
+        Identifier templateId = this.identifierFactory.create("templateId", "random");
         Identifier notTemplateId = this.identifierFactory.create("notTemplateId", "random");
-        
+
         int random = (int)(Math.random() * (10 - 2 + 1) + 2);
 
         for (int i = 0; i < random; i++) {
@@ -504,18 +508,18 @@ public class ImmunizationConverterTest {
         assertFalse(event.getTemplateId().isEmpty());
         assertEquals(event.getTemplateId().size(), random);
     }
-    
+
     @Test
     public void convertToCdsSetsExtensionForMatchingIdentifier() {
         Immunization immunization = new Immunization();
-        Identifier extension = this.identifierFactory.create("idExtension", "random");        
+        Identifier extension = this.identifierFactory.create("idExtension", "random");
         immunization.addIdentifier(extension);
 
         SubstanceAdministrationEvent event = this.immunizationConverter.convertToCds(immunization);
 
         assertEquals(event.getId().getExtension(), "random");
     }
-    
+
     @Test
     public void convertToCdsSetsGeneralPurpose() {
         Immunization immunization = new Immunization();
@@ -537,7 +541,7 @@ public class ImmunizationConverterTest {
 
         assertNotNull(event.getSubstanceAdministrationGeneralPurpose().getCode());
     }
-    
+
     @Test
     public void convertToFhirSetsNoIdentifiersIfNoTemplateId() {
         ObservationResult observationResult = new ObservationResult();
@@ -577,7 +581,7 @@ public class ImmunizationConverterTest {
 
         assertTrue(immunization.getVaccineCode().isEmpty());
     }
-    
+
     @Test
     public void convertToFhirAddsIdentifierForTemplateId() {
         ObservationResult observationResult = new ObservationResult();
@@ -590,7 +594,7 @@ public class ImmunizationConverterTest {
 
         assertEquals(immunization.getIdentifier().size(), 1);
     }
-    
+
     @Test
     public void convertToFhirAddsId() {
         ObservationResult observationResult = new ObservationResult();
@@ -603,7 +607,7 @@ public class ImmunizationConverterTest {
 
         assertEquals(immunization.getId(), "my id");
     }
-    
+
     @Test
     public void convertToFhirSetsVaccineCode() {
         CD observationFocus = new CD();
@@ -616,7 +620,7 @@ public class ImmunizationConverterTest {
 
         assertFalse(immunization.getVaccineCode().isEmpty());
     }
-    
+
     @Test
     public void convertToFhirSetsOccurrence() {
         IVLTS eventTime = new IVLTS();
@@ -630,7 +634,7 @@ public class ImmunizationConverterTest {
 
         assertNotNull(immunization.getOccurrenceDateTimeType());
     }
-    
+
     @Test
     public void convertToFhirSilentlyFailsIfNoObservationEventTime() {
         ObservationResult observationResult = new ObservationResult();
@@ -639,7 +643,7 @@ public class ImmunizationConverterTest {
 
         assertNull(immunization.getOccurrence());
     }
-    
+
     @Test
     public void convertToFhirAddsIdentifiersForEachTemplateId() {
         ObservationResult observationResult = new ObservationResult();
@@ -658,7 +662,7 @@ public class ImmunizationConverterTest {
         assertFalse(immunization.getIdentifier().isEmpty());
         assertEquals(immunization.getIdentifier().size(), random);
     }
-    
+
     @Test
     public void convertToFhirAddsNoReasonsIfNoInterpretations() {
         ObservationResult observationResult = new ObservationResult();
@@ -666,7 +670,7 @@ public class ImmunizationConverterTest {
 
         assertTrue(immunization.getReasonCode().isEmpty());
     }
-    
+
     @Test
     public void convertToFhirAddsReasonsForEachInterpretation() {
         ObservationResult observationResult = new ObservationResult();
@@ -683,12 +687,12 @@ public class ImmunizationConverterTest {
         assertFalse(immunization.getReasonCode().isEmpty());
         assertEquals(immunization.getReasonCode().size(), random);
     }
-    
+
     @Test
     public void convertToFhirSetsStatusReason() {
         ObservationResult observationResult = new ObservationResult();
         ObservationValue observationValue = new ObservationValue();
-        
+
         CD code = new CD();
 
         observationValue.setConcept(code);
@@ -699,7 +703,7 @@ public class ImmunizationConverterTest {
 
         assertTrue(immunization.getStatusReason().isEmpty());
     }
-    
+
     @Test
     public void convertToFhirAddsNoIdentifiersIfNoTemplateIdsOrExtension() {
         SubstanceAdministrationEvent event = new SubstanceAdministrationEvent();
@@ -707,7 +711,7 @@ public class ImmunizationConverterTest {
         Immunization immunization = this.immunizationConverter.convertToFhir(event);
         assertTrue(immunization.getIdentifier().isEmpty());
     }
-    
+
     @Test
     public void convertToFhirAddsIdentifierForEachTemplateId() {
         SubstanceAdministrationEvent event = new SubstanceAdministrationEvent();
@@ -726,7 +730,7 @@ public class ImmunizationConverterTest {
         assertFalse(immunization.getIdentifier().isEmpty());
         assertEquals(immunization.getIdentifier().size(), random);
     }
-    
+
     @Test
     public void convertToFhirSetsRecordedTime() {
         SubstanceAdministrationEvent event = new SubstanceAdministrationEvent();
@@ -753,7 +757,7 @@ public class ImmunizationConverterTest {
 
         assertTrue(immunization.getIdentifier().isEmpty());
     }
-    
+
     @Test
     public void convertToFhirAddsIdentifierForIdExtension() {
         SubstanceAdministrationEvent event = new SubstanceAdministrationEvent();
@@ -775,7 +779,7 @@ public class ImmunizationConverterTest {
 
         assertNull(immunization.getId());
     }
-    
+
     @Test
     public void convertToFhirSetsIdIfIdIsFound() {
         SubstanceAdministrationEvent event = new SubstanceAdministrationEvent();
@@ -797,12 +801,12 @@ public class ImmunizationConverterTest {
 
         assertTrue(immunization.getVaccineCode().isEmpty());
     }
-    
+
     @Test
     public void convertToFhirBuildsVaccineCode() {
         SubstanceAdministrationEvent event = new SubstanceAdministrationEvent();
         AdministrableSubstance substance = new AdministrableSubstance();
-        
+
         CD code = new CD();
         code.setCode("code");
         II id = new II();
@@ -824,7 +828,7 @@ public class ImmunizationConverterTest {
 
         assertTrue(immunization.getReasonCode().isEmpty());
     }
-    
+
     @Test
     public void convertToFhirAddsReasonCode() {
         SubstanceAdministrationEvent event = new SubstanceAdministrationEvent();
@@ -837,5 +841,62 @@ public class ImmunizationConverterTest {
         Immunization immunization = this.immunizationConverter.convertToFhir(event);
 
         assertFalse(immunization.getReasonCode().isEmpty());
+    }
+
+    @Test
+    public void convertToCdsAddsNoEventsIfNoImmunizations() {
+        List<Immunization> immunizations = new ArrayList<Immunization>();
+        SubstanceAdministrationEvents events = this.immunizationConverter.convertToCds(immunizations);
+
+        assertEquals(0, events.getSubstanceAdministrationEvent().size());
+    }
+
+    @Test
+    public void convertToCdsAddsEventForEachImmunization() {
+        List<Immunization> immunizations = new ArrayList<Immunization>();
+        Immunization immunization = new Immunization();
+
+        immunizations.add(immunization);
+        immunizations.add(immunization);
+        immunizations.add(immunization);
+
+        SubstanceAdministrationEvents events = this.immunizationConverter.convertToCds(immunizations);
+
+        assertEquals(3, events.getSubstanceAdministrationEvent().size());
+    }
+
+    @Test
+    public void convertToCdsSetsValidIfStatusExists() {
+        Immunization immunization = new Immunization();
+
+        SubstanceAdministrationEvent event = this.immunizationConverter.convertToCds(immunization);
+
+        assertNull(event.getIsValid());
+
+        ImmunizationStatus immunizationStatus = ImmunizationStatus.COMPLETED;
+
+        immunization.setStatus(immunizationStatus);
+
+        event = this.immunizationConverter.convertToCds(immunization);
+
+        assertNotNull(event.getIsValid());
+    }
+
+    @Test
+    public void convertToFhirSetsStatusIfValidIsSet() {
+        SubstanceAdministrationEvent event = new SubstanceAdministrationEvent();
+
+        Immunization immunization = this.immunizationConverter.convertToFhir(event);
+
+        assertNull(immunization.getStatus());
+
+        BL valid = new BL();
+        valid.setValue(true);
+
+        event.setIsValid(valid);
+
+        immunization = this.immunizationConverter.convertToFhir(event);
+
+        assertNotNull(immunization.getStatus());
     }
 }
