@@ -2,15 +2,18 @@ package org.cdsframework.messageconverter.fhir.convert.vmr;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import org.cdsframework.messageconverter.fhir.convert.utils.IdentifierFactory;
 import org.cdsframework.util.LogUtils;
 import org.hl7.fhir.r4.model.CodeableConcept;
-import org.hl7.fhir.r4.model.Extension;
-import org.hl7.fhir.r4.model.Identifier;
 import org.hl7.fhir.r4.model.Immunization;
 import org.hl7.fhir.r4.model.ImmunizationEvaluation;
+import org.hl7.fhir.r4.model.ImmunizationEvaluation.ImmunizationEvaluationStatus;
+import org.hl7.fhir.r4.model.Meta;
 import org.hl7.fhir.r4.model.Patient;
+import org.hl7.fhir.r4.model.PositiveIntType;
+import org.hl7.fhir.r4.model.Reference;
 import org.opencds.vmr.v1_0.schema.CD;
 import org.opencds.vmr.v1_0.schema.CDSOutput;
 import org.opencds.vmr.v1_0.schema.EvaluatedPerson.ClinicalStatements.SubstanceAdministrationEvents;
@@ -53,7 +56,7 @@ public class ImmunizationEvaluationConverter {
         }
 
         for (SubstanceAdministrationEvent event : data.getVmrOutput().getPatient().getClinicalStatements().getSubstanceAdministrationEvents().getSubstanceAdministrationEvent()) {
-            Immunization immunization = this.immunizationConverter.convertToFhir(event);
+            Immunization immunization = this.immunizationConverter.convertToFhir(patient, event);
 
             for (RelatedClinicalStatement relatedClinicalStatment : event.getRelatedClinicalStatement()) {
                 ObservationResult observationResult = relatedClinicalStatment.getObservationResult();
@@ -85,40 +88,6 @@ public class ImmunizationEvaluationConverter {
     }
 
     /**
-     * This method combines FHIR objects and extracts the data from an ObservationResult to create an
-     * ImmunizationEvaluation object containing the pertinent information.
-     *
-     * @param Patient patient : a FHIR patient object
-     * @param Immunization immunization : the immunization being evaluated
-     * @param Immunization parentImmunization : the immunization containing identifiers linking back to CDS objects
-     * @param ObservationResult observationResult : CDS observation result containing evaluation information
-     * @return ImmunizationEvalution
-     */
-    public ImmunizationEvaluation convertToFhir(
-        Patient patient,
-        Immunization immunization,
-        Immunization parentImmunization,
-        ObservationResult observationResult
-    ) {
-        ImmunizationEvaluation evaluation = this.convertToFhir(patient, immunization, observationResult);
-
-        Identifier identifier = this.identifierFactory.create("parentId", parentImmunization.getId());
-
-        for (Identifier immunizationId : parentImmunization.getIdentifier()) {
-            if (immunizationId.getType().getText().equals("idExtension")) {
-                Extension extension = new Extension();
-                extension.setId(immunizationId.getValue());
-
-                identifier.addExtension(extension);
-            }
-        }
-
-        evaluation.addIdentifier(identifier);
-
-        return evaluation;
-    }
-
-    /**
      * This method converts a SubstanceAdministrationEvent object into an ImmunizationEvaluation object.
      * It requires a Patient object to update the ImmunizationEvaluation object.
      *
@@ -129,22 +98,17 @@ public class ImmunizationEvaluationConverter {
     public ImmunizationEvaluation convertToFhir(Patient patient, Immunization immunization, ObservationResult observationResult) {
         ImmunizationEvaluation evaluation = new ImmunizationEvaluation();
 
-        try {
-            for (II templateId : observationResult.getTemplateId()) {
-                evaluation.addIdentifier(
-                    this.identifierFactory.create("templateId", templateId.getRoot())
-                );
-            }
-        } catch (NullPointerException exception) {
-            this.logger.debug("convertToFhir", "No template ids found");
-        }
+        Meta meta = new Meta();
+        meta.addProfile("http://hl7.org/fhir/us/ImmunizationFHIRDS/StructureDefinition/immds-immunizationevaluation");
+        evaluation.setMeta(meta);
+
+        ImmunizationEvaluationStatus immunizationEvaluationStatus = ImmunizationEvaluationStatus.COMPLETED;
+        evaluation.setStatus(immunizationEvaluationStatus);
 
         try {
             evaluation.setId(observationResult.getId().getRoot());
-
-            Identifier extensionId = this.identifierFactory.create("extensionId", observationResult.getId().getExtension());
-            evaluation.addIdentifier(extensionId);
         } catch (NullPointerException exception) {
+            evaluation.setId(UUID.randomUUID().toString());
             this.logger.debug("convertToFhir", "No id found");
         }
 
@@ -166,17 +130,19 @@ public class ImmunizationEvaluationConverter {
             this.logger.debug("convertToFhir", "No observation value found");
         }
 
-        try {
-            for (CD interpretation : observationResult.getInterpretation()) {
-                CodeableConcept doseStatusReason = this.codeableConceptConverter.convertToFhir(interpretation);
-                evaluation.addDoseStatusReason(doseStatusReason);
-            }
-        } catch (NullPointerException exception) {
-            this.logger.debug("convertToFhir", "No interpretation found");
-        }
+        PositiveIntType doseNumber = new PositiveIntType();
+        doseNumber.setValue(1);
 
-        evaluation.setPatientTarget(patient);
-        evaluation.setImmunizationEventTarget(immunization);
+        evaluation.setDoseNumber(doseNumber);
+
+        Reference patientReference = new Reference();
+        patientReference.setReference("Patient/" + patient.getId());
+
+        Reference immunizationReference = new Reference();
+        immunizationReference.setReference("Immunization/" + immunization.getId());
+
+        evaluation.setPatient(patientReference);
+        evaluation.setImmunizationEvent(immunizationReference);
 
         return evaluation;
     }
@@ -196,17 +162,6 @@ public class ImmunizationEvaluationConverter {
 
         observationResult.setId(id);
 
-        for (Identifier identifier : evaluation.getIdentifier()) {
-            if (identifier.getType().getText() == "templateId") {
-                II templateId = new II();
-                templateId.setRoot(identifier.getValue());
-
-                observationResult.getTemplateId().add(templateId);
-            } else if (identifier.getType().getText() == "extensionId") {
-                id.setExtension(identifier.getValue());
-            }
-        }
-
         CodeableConcept targetDisease = evaluation.getTargetDisease();
 
         if (!targetDisease.isEmpty()) {
@@ -222,11 +177,6 @@ public class ImmunizationEvaluationConverter {
 
             observationValue.setConcept(observationValueConcept);
             observationResult.setObservationValue(observationValue);
-        }
-
-        for (CodeableConcept doseStatusReason : evaluation.getDoseStatusReason()) {
-            CD interpretation = this.codeableConceptConverter.convertToCds(doseStatusReason);
-            observationResult.getInterpretation().add(interpretation);
         }
 
         return observationResult;

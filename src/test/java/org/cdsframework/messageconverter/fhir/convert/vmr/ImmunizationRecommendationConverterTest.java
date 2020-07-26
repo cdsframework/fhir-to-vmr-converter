@@ -12,7 +12,9 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 import org.cdsframework.cds.vmr.CdsObjectAssist;
 import org.cdsframework.messageconverter.fhir.convert.utils.IdentifierFactory;
@@ -43,6 +45,7 @@ public class ImmunizationRecommendationConverterTest {
     protected CDSOutput output;
     protected CD code;
     protected Patient patient = new Patient();
+    protected List<SubstanceAdministrationProposal> proposals = new ArrayList<SubstanceAdministrationProposal>();
     protected SubstanceAdministrationProposal proposal = new SubstanceAdministrationProposal();
     protected SimpleDateFormat dateFormat = new SimpleDateFormat("yyyymmdd");
     protected ImmunizationRecommendation recommendation = new ImmunizationRecommendation();
@@ -64,7 +67,7 @@ public class ImmunizationRecommendationConverterTest {
     public void convertToFhirSetsPatient() {
         ImmunizationRecommendation recommendation = this.immunizationRecommendationConverter.convertToFhir(
             this.patient,
-            this.proposal
+            this.proposals
         );
 
         assertFalse(recommendation.getPatientTarget().isEmpty());
@@ -74,7 +77,7 @@ public class ImmunizationRecommendationConverterTest {
     public void convertToFhirDoesNotSetIdIfNoId() {
         ImmunizationRecommendation recommendation = this.immunizationRecommendationConverter.convertToFhir(
             this.patient,
-            this.proposal
+            this.proposals
         );
 
         assertNull(recommendation.getId());
@@ -87,9 +90,11 @@ public class ImmunizationRecommendationConverterTest {
 
         this.proposal.setId(id);
 
+        this.proposals.add(this.proposal);
+
         ImmunizationRecommendation recommendation = this.immunizationRecommendationConverter.convertToFhir(
             this.patient,
-            this.proposal
+            this.proposals
         );
 
         assertEquals("proposalid", recommendation.getId());
@@ -99,7 +104,7 @@ public class ImmunizationRecommendationConverterTest {
     public void convertToFhirDoesNotSetDateIfNoTimeInterval() {
         ImmunizationRecommendation recommendation = this.immunizationRecommendationConverter.convertToFhir(
             this.patient,
-            this.proposal
+            this.proposals
         );
 
         ImmunizationRecommendationRecommendationComponent component = recommendation.getRecommendationFirstRep();
@@ -113,10 +118,11 @@ public class ImmunizationRecommendationConverterTest {
         timeInterval.setHigh("209");
 
         this.proposal.setProposedAdministrationTimeInterval(timeInterval);
+        this.proposals.add(this.proposal);
 
         ImmunizationRecommendation recommendation = this.immunizationRecommendationConverter.convertToFhir(
             this.patient,
-            this.proposal
+            this.proposals
         );
 
         ImmunizationRecommendationRecommendationComponent component = recommendation.getRecommendationFirstRep();
@@ -129,10 +135,11 @@ public class ImmunizationRecommendationConverterTest {
         IVLTS timeInterval = new IVLTS();
 
         this.proposal.setProposedAdministrationTimeInterval(timeInterval);
+        this.proposals.add(this.proposal);
 
         ImmunizationRecommendation recommendation = this.immunizationRecommendationConverter.convertToFhir(
             this.patient,
-            this.proposal
+            this.proposals
         );
 
         ImmunizationRecommendationRecommendationComponent component = recommendation.getRecommendationFirstRep();
@@ -146,10 +153,11 @@ public class ImmunizationRecommendationConverterTest {
         timeInterval.setLow("20200702");
 
         this.proposal.setProposedAdministrationTimeInterval(timeInterval);
+        this.proposals.add(this.proposal);
 
         ImmunizationRecommendation recommendation = this.immunizationRecommendationConverter.convertToFhir(
             this.patient,
-            this.proposal
+            this.proposals
         );
 
         ImmunizationRecommendationRecommendationComponent component = recommendation.getRecommendationFirstRep();
@@ -167,10 +175,11 @@ public class ImmunizationRecommendationConverterTest {
         timeInterval.setHigh("20200702");
 
         this.proposal.setProposedAdministrationTimeInterval(timeInterval);
+        this.proposals.add(this.proposal);
 
         ImmunizationRecommendation recommendation = this.immunizationRecommendationConverter.convertToFhir(
             this.patient,
-            this.proposal
+            this.proposals
         );
 
         ImmunizationRecommendationRecommendationComponent component = recommendation.getRecommendationFirstRep();
@@ -189,10 +198,11 @@ public class ImmunizationRecommendationConverterTest {
         timeInterval.setLow("20200703");
 
         this.proposal.setProposedAdministrationTimeInterval(timeInterval);
+        this.proposals.add(this.proposal);
 
         ImmunizationRecommendation recommendation = this.immunizationRecommendationConverter.convertToFhir(
             this.patient,
-            this.proposal
+            this.proposals
         );
 
         ImmunizationRecommendationRecommendationComponent component = recommendation.getRecommendationFirstRep();
@@ -214,7 +224,7 @@ public class ImmunizationRecommendationConverterTest {
     public void convertToFhirDoesntAddTemplateIdIfNoTemplateIds() {
         ImmunizationRecommendation recommendation = this.immunizationRecommendationConverter.convertToFhir(
             this.patient,
-            this.proposal
+            this.proposals
         );
 
         assertEquals(0, recommendation.getIdentifier().size());
@@ -228,10 +238,11 @@ public class ImmunizationRecommendationConverterTest {
         this.proposal.getTemplateId().add(templateId);
         this.proposal.getTemplateId().add(templateId);
         this.proposal.getTemplateId().add(templateId);
+        this.proposals.add(this.proposal);
 
         ImmunizationRecommendation recommendation = this.immunizationRecommendationConverter.convertToFhir(
             this.patient,
-            this.proposal
+            this.proposals
         );
 
         assertEquals(3, recommendation.getIdentifier().size());
@@ -241,7 +252,7 @@ public class ImmunizationRecommendationConverterTest {
     public void convertToFhirDoesntAddContraindicatedVaccineCodeIfNoGeneralPurpose() {
         ImmunizationRecommendation recommendation = this.immunizationRecommendationConverter.convertToFhir(
             this.patient,
-            this.proposal
+            this.proposals
         );
 
         ImmunizationRecommendationRecommendationComponent component = recommendation.getRecommendationFirstRep();
@@ -255,10 +266,11 @@ public class ImmunizationRecommendationConverterTest {
         generalPurpose.setCode("code");
 
         this.proposal.setSubstanceAdministrationGeneralPurpose(generalPurpose);
+        this.proposals.add(this.proposal);
 
         ImmunizationRecommendation recommendation = this.immunizationRecommendationConverter.convertToFhir(
             this.patient,
-            this.proposal
+            this.proposals
         );
 
         ImmunizationRecommendationRecommendationComponent component = recommendation.getRecommendationFirstRep();
@@ -274,7 +286,7 @@ public class ImmunizationRecommendationConverterTest {
     public void convertToFhirDoesNotSetVaccineCodeIfNoSubstance() {
         ImmunizationRecommendation recommendation = this.immunizationRecommendationConverter.convertToFhir(
             this.patient,
-            this.proposal
+            this.proposals
         );
 
         ImmunizationRecommendationRecommendationComponent component = recommendation.getRecommendationFirstRep();
@@ -286,10 +298,11 @@ public class ImmunizationRecommendationConverterTest {
     public void convertToFhirDoesNotSetVaccineCodeIfNoSubstanceCode() {
         AdministrableSubstance substance = new AdministrableSubstance();
         this.proposal.setSubstance(substance);
+        this.proposals.add(this.proposal);
 
         ImmunizationRecommendation recommendation = this.immunizationRecommendationConverter.convertToFhir(
             this.patient,
-            this.proposal
+            this.proposals
         );
 
         ImmunizationRecommendationRecommendationComponent component = recommendation.getRecommendationFirstRep();
@@ -306,10 +319,11 @@ public class ImmunizationRecommendationConverterTest {
         substance.setSubstanceCode(substanceCode);
 
         this.proposal.setSubstance(substance);
+        this.proposals.add(this.proposal);
 
         ImmunizationRecommendation recommendation = this.immunizationRecommendationConverter.convertToFhir(
             this.patient,
-            this.proposal
+            this.proposals
         );
 
         ImmunizationRecommendationRecommendationComponent component = recommendation.getRecommendationFirstRep();
@@ -334,10 +348,11 @@ public class ImmunizationRecommendationConverterTest {
         substance.setId(id);
 
         this.proposal.setSubstance(substance);
+        this.proposals.add(this.proposal);
 
         ImmunizationRecommendation recommendation = this.immunizationRecommendationConverter.convertToFhir(
             this.patient,
-            this.proposal
+            this.proposals
         );
 
         ImmunizationRecommendationRecommendationComponent component = recommendation.getRecommendationFirstRep();
@@ -353,7 +368,7 @@ public class ImmunizationRecommendationConverterTest {
     public void convertToFhirAddsOneRecommendationIfNoRelatedClinicalStatements() {
         ImmunizationRecommendation recommendation = this.immunizationRecommendationConverter.convertToFhir(
             this.patient,
-            this.proposal
+            this.proposals
         );
 
         assertEquals(1, recommendation.getRecommendation().size());
@@ -366,10 +381,11 @@ public class ImmunizationRecommendationConverterTest {
         this.proposal.getRelatedClinicalStatement().add(clinicalStatement);
         this.proposal.getRelatedClinicalStatement().add(clinicalStatement);
         this.proposal.getRelatedClinicalStatement().add(clinicalStatement);
+        this.proposals.add(this.proposal);
 
         ImmunizationRecommendation recommendation = this.immunizationRecommendationConverter.convertToFhir(
             this.patient,
-            this.proposal
+            this.proposals
         );
 
         assertEquals(1, recommendation.getRecommendation().size());
@@ -385,10 +401,11 @@ public class ImmunizationRecommendationConverterTest {
         this.proposal.getRelatedClinicalStatement().add(clinicalStatement);
         this.proposal.getRelatedClinicalStatement().add(clinicalStatement);
         this.proposal.getRelatedClinicalStatement().add(clinicalStatement);
+        this.proposals.add(this.proposal);
 
         ImmunizationRecommendation recommendation = this.immunizationRecommendationConverter.convertToFhir(
             this.patient,
-            this.proposal
+            this.proposals
         );
 
         assertEquals(3, recommendation.getRecommendation().size());
@@ -401,10 +418,11 @@ public class ImmunizationRecommendationConverterTest {
 
         clinicalStatement.setObservationResult(observationResult);
         this.proposal.getRelatedClinicalStatement().add(clinicalStatement);
+        this.proposals.add(this.proposal);
 
         ImmunizationRecommendation recommendation = this.immunizationRecommendationConverter.convertToFhir(
             this.patient,
-            this.proposal
+            this.proposals
         );
 
         ImmunizationRecommendationRecommendationComponent component = recommendation.getRecommendationFirstRep();
@@ -424,10 +442,11 @@ public class ImmunizationRecommendationConverterTest {
 
         clinicalStatement.setObservationResult(observationResult);
         this.proposal.getRelatedClinicalStatement().add(clinicalStatement);
+        this.proposals.add(this.proposal);
 
         ImmunizationRecommendation recommendation = this.immunizationRecommendationConverter.convertToFhir(
             this.patient,
-            this.proposal
+            this.proposals
         );
 
         ImmunizationRecommendationRecommendationComponent component = recommendation.getRecommendationFirstRep();
@@ -443,10 +462,11 @@ public class ImmunizationRecommendationConverterTest {
 
         clinicalStatement.setObservationResult(observationResult);
         this.proposal.getRelatedClinicalStatement().add(clinicalStatement);
+        this.proposals.add(this.proposal);
 
         ImmunizationRecommendation recommendation = this.immunizationRecommendationConverter.convertToFhir(
             this.patient,
-            this.proposal
+            this.proposals
         );
 
         ImmunizationRecommendationRecommendationComponent component = recommendation.getRecommendationFirstRep();
@@ -467,10 +487,11 @@ public class ImmunizationRecommendationConverterTest {
 
         clinicalStatement.setObservationResult(observationResult);
         this.proposal.getRelatedClinicalStatement().add(clinicalStatement);
+        this.proposals.add(this.proposal);
 
         ImmunizationRecommendation recommendation = this.immunizationRecommendationConverter.convertToFhir(
             this.patient,
-            this.proposal
+            this.proposals
         );
 
         ImmunizationRecommendationRecommendationComponent component = recommendation.getRecommendationFirstRep();
@@ -486,10 +507,11 @@ public class ImmunizationRecommendationConverterTest {
 
         clinicalStatement.setObservationResult(observationResult);
         this.proposal.getRelatedClinicalStatement().add(clinicalStatement);
+        this.proposals.add(this.proposal);
 
         ImmunizationRecommendation recommendation = this.immunizationRecommendationConverter.convertToFhir(
             this.patient,
-            this.proposal
+            this.proposals
         );
 
         for (Identifier identifier : recommendation.getIdentifier()) {
@@ -518,12 +540,13 @@ public class ImmunizationRecommendationConverterTest {
         this.proposal.getRelatedClinicalStatement().add(clinicalStatement);
         this.proposal.getRelatedClinicalStatement().add(clinicalStatement);
         this.proposal.getRelatedClinicalStatement().add(clinicalStatement);
+        this.proposals.add(this.proposal);
 
         int numTemplateIds = 0;
 
         ImmunizationRecommendation recommendation = this.immunizationRecommendationConverter.convertToFhir(
             this.patient,
-            this.proposal
+            this.proposals
         );
 
         for (Identifier identifier : recommendation.getIdentifier()) {
@@ -542,10 +565,11 @@ public class ImmunizationRecommendationConverterTest {
 
         clinicalStatement.setObservationResult(observationResult);
         this.proposal.getRelatedClinicalStatement().add(clinicalStatement);
+        this.proposals.add(this.proposal);
 
         ImmunizationRecommendation recommendation = this.immunizationRecommendationConverter.convertToFhir(
             this.patient,
-            this.proposal
+            this.proposals
         );
 
         ImmunizationRecommendationRecommendationComponent component = recommendation.getRecommendationFirstRep();
@@ -562,10 +586,11 @@ public class ImmunizationRecommendationConverterTest {
         observationResult.setObservationValue(observationValue);
         clinicalStatement.setObservationResult(observationResult);
         this.proposal.getRelatedClinicalStatement().add(clinicalStatement);
+        this.proposals.add(this.proposal);
 
         ImmunizationRecommendation recommendation = this.immunizationRecommendationConverter.convertToFhir(
             this.patient,
-            this.proposal
+            this.proposals
         );
 
         ImmunizationRecommendationRecommendationComponent component = recommendation.getRecommendationFirstRep();
@@ -586,10 +611,11 @@ public class ImmunizationRecommendationConverterTest {
         observationResult.setObservationValue(observationValue);
         clinicalStatement.setObservationResult(observationResult);
         this.proposal.getRelatedClinicalStatement().add(clinicalStatement);
+        this.proposals.add(this.proposal);
 
         ImmunizationRecommendation recommendation = this.immunizationRecommendationConverter.convertToFhir(
             this.patient,
-            this.proposal
+            this.proposals
         );
 
         ImmunizationRecommendationRecommendationComponent component = recommendation.getRecommendationFirstRep();
@@ -604,10 +630,11 @@ public class ImmunizationRecommendationConverterTest {
 
         clinicalStatement.setObservationResult(observationResult);
         this.proposal.getRelatedClinicalStatement().add(clinicalStatement);
+        this.proposals.add(this.proposal);
 
         ImmunizationRecommendation recommendation = this.immunizationRecommendationConverter.convertToFhir(
             this.patient,
-            this.proposal
+            this.proposals
         );
 
         ImmunizationRecommendationRecommendationComponent component = recommendation.getRecommendationFirstRep();
@@ -630,10 +657,11 @@ public class ImmunizationRecommendationConverterTest {
         clinicalStatement.setObservationResult(observationResult);
 
         this.proposal.getRelatedClinicalStatement().add(clinicalStatement);
+        this.proposals.add(this.proposal);
 
         ImmunizationRecommendation recommendation = this.immunizationRecommendationConverter.convertToFhir(
             this.patient,
-            this.proposal
+            this.proposals
         );
 
         ImmunizationRecommendationRecommendationComponent component = recommendation.getRecommendationFirstRep();

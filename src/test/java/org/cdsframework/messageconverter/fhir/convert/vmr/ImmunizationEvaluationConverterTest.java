@@ -15,7 +15,6 @@ import java.util.List;
 import org.cdsframework.cds.vmr.CdsObjectAssist;
 import org.cdsframework.messageconverter.fhir.convert.utils.IdentifierFactory;
 import org.hl7.fhir.r4.model.CodeableConcept;
-import org.hl7.fhir.r4.model.Identifier;
 import org.hl7.fhir.r4.model.Immunization;
 import org.hl7.fhir.r4.model.ImmunizationEvaluation;
 import org.hl7.fhir.r4.model.Patient;
@@ -107,8 +106,8 @@ public class ImmunizationEvaluationConverterTest {
 
         ImmunizationEvaluation evaluation = this.immunizationEvaluationConverter.convertToFhir(patient, immunization, result);
 
-        assertFalse(evaluation.getPatientTarget().isEmpty());
-        assertFalse(evaluation.getImmunizationEventTarget().isEmpty());
+        assertFalse(evaluation.getPatient().isEmpty());
+        assertFalse(evaluation.getImmunizationEvent().isEmpty());
     }
 
     @Test
@@ -171,141 +170,14 @@ public class ImmunizationEvaluationConverterTest {
     }
 
     @Test
-    public void convertToFhirAddsNoExtensionsIfNoIdentifiers() {
-        Immunization immunization = new Immunization();
-        Patient patient = new Patient();
-        ObservationResult observationResult = new ObservationResult();
-        boolean parentId = false;
-
-        ImmunizationEvaluation evaluation = this.immunizationEvaluationConverter.convertToFhir(
-            patient,
-            immunization,
-            immunization,
-            observationResult
-        );
-
-        for (Identifier identifier : evaluation.getIdentifier()) {
-            if (identifier.getType().getText().equals("parentId")) {
-                parentId = true;
-                assertEquals(0, identifier.getExtension().size());
-            }
-        }
-
-        assertTrue(parentId);
-    }
-
-    @Test
-    public void convertToFhirAddsNoExtensionsIfNoIdExtensionIdentifier() {
-        Immunization immunization = new Immunization();
-        Patient patient = new Patient();
-        ObservationResult observationResult = new ObservationResult();
-        boolean parentId = false;
-
-        Identifier identifier = this.identifierFactory.create("notUseful", "3");
-
-        immunization.addIdentifier(identifier);
-        immunization.addIdentifier(identifier);
-        immunization.addIdentifier(identifier);
-
-        ImmunizationEvaluation evaluation = this.immunizationEvaluationConverter.convertToFhir(
-            patient,
-            immunization,
-            immunization,
-            observationResult
-        );
-
-        for (Identifier evaluationIdentifier : evaluation.getIdentifier()) {
-            if (evaluationIdentifier.getType().getText().equals("parentId")) {
-                parentId = true;
-                assertEquals(0, evaluationIdentifier.getExtension().size());
-            }
-        }
-
-        assertTrue(parentId);
-    }
-
-    @Test
-    public void convertToFhirAddsExtensionForEachIdExtensionIdentifier() {
-        Immunization immunization = new Immunization();
-        Patient patient = new Patient();
-        ObservationResult observationResult = new ObservationResult();
-        boolean parentId = false;
-
-        Identifier templateId = this.identifierFactory.create("templateId", "3");
-        Identifier idExtension = this.identifierFactory.create("idExtension", "4");
-
-        immunization.addIdentifier(templateId);
-        immunization.addIdentifier(idExtension);
-        immunization.addIdentifier(idExtension);
-
-        ImmunizationEvaluation evaluation = this.immunizationEvaluationConverter.convertToFhir(
-            patient,
-            immunization,
-            immunization,
-            observationResult
-        );
-
-        for (Identifier identifier : evaluation.getIdentifier()) {
-            if (identifier.getType().getText().equals("parentId")) {
-                parentId = true;
-                assertEquals(2, identifier.getExtension().size());
-            }
-        }
-
-        assertTrue(parentId);
-    }
-
-    @Test
-    public void convertToFhirAddsNoTemplateIdIdentifiersIfNoTemplateIds() {
-        Patient patient = new Patient();
-        Immunization immunization = new Immunization();
-        ObservationResult observationResult = new ObservationResult();
-        boolean templateId = false;
-
-        ImmunizationEvaluation evaluation = this.immunizationEvaluationConverter.convertToFhir(patient, immunization, observationResult);
-
-        for (Identifier identifier : evaluation.getIdentifier()) {
-            if (identifier.getType().getText().equals("templateId")) {
-                templateId = true;
-            }
-        }
-
-        assertFalse(templateId);
-    }
-
-    @Test
-    public void convertToFhirAddsTemplateIdIdentifierForEachTemplateId() {
-        Patient patient = new Patient();
-        Immunization immunization = new Immunization();
-        ObservationResult observationResult = new ObservationResult();
-        int templateIds = 0;
-
-        II templateId = new II();
-
-        observationResult.getTemplateId().add(templateId);
-        observationResult.getTemplateId().add(templateId);
-        observationResult.getTemplateId().add(templateId);
-
-        ImmunizationEvaluation evaluation = this.immunizationEvaluationConverter.convertToFhir(patient, immunization, observationResult);
-
-        for (Identifier identifier : evaluation.getIdentifier()) {
-            if (identifier.getType().getText().equals("templateId")) {
-                templateIds++;
-            }
-        }
-
-        assertEquals(3, templateIds);
-    }
-
-    @Test
-    public void convertToFhirDoesntSetIdIfNoIdFound() {
+    public void convertToFhirDoesntSetIdRandomlyEvenIfNoId() {
         Patient patient = new Patient();
         Immunization immunization = new Immunization();
         ObservationResult observationResult = new ObservationResult();
 
         ImmunizationEvaluation evaluation = this.immunizationEvaluationConverter.convertToFhir(patient, immunization, observationResult);
 
-        assertNull(evaluation.getId());
+        assertNotNull(evaluation.getId());
     }
 
     @Test
@@ -322,49 +194,6 @@ public class ImmunizationEvaluationConverterTest {
         ImmunizationEvaluation evaluation = this.immunizationEvaluationConverter.convertToFhir(patient, immunization, observationResult);
 
         assertEquals("my id", evaluation.getId());
-    }
-
-    @Test
-    public void convertToFhirAddsNoExtensionIdIfNoExtension() {
-        Patient patient = new Patient();
-        Immunization immunization = new Immunization();
-        ObservationResult observationResult = new ObservationResult();
-        boolean extensionId = false;
-
-        ImmunizationEvaluation evaluation = this.immunizationEvaluationConverter.convertToFhir(patient, immunization, observationResult);
-
-        for (Identifier identifier : evaluation.getIdentifier()) {
-            if (identifier.getType().getText().equals("extensionId")) {
-                extensionId = true;
-            }
-        }
-
-        assertFalse(extensionId);
-    }
-
-    @Test
-    public void convertToFhirAddsIdentifierForExtensionId() {
-        Patient patient = new Patient();
-        Immunization immunization = new Immunization();
-        ObservationResult observationResult = new ObservationResult();
-        boolean extensionId = false;
-
-        II id = new II();
-        id.setRoot("my id");
-        id.setExtension("my extension");
-
-        observationResult.setId(id);
-
-        ImmunizationEvaluation evaluation = this.immunizationEvaluationConverter.convertToFhir(patient, immunization, observationResult);
-
-        for (Identifier identifier : evaluation.getIdentifier()) {
-            if (identifier.getType().getText().equals("extensionId")) {
-                extensionId = true;
-                assertEquals("my extension", identifier.getValue());
-            }
-        }
-
-        assertTrue(extensionId);
     }
 
     @Test
@@ -439,26 +268,6 @@ public class ImmunizationEvaluationConverterTest {
     }
 
     @Test
-    public void convertToFhirAddsDoseStatusReasonForEachInterpretation() {
-        Patient patient = new Patient();
-        Immunization immunization = new Immunization();
-        ObservationResult observationResult = new ObservationResult();
-
-        CD interpretation = new CD();
-        interpretation.setCode("code");
-        interpretation.setDisplayName("display");
-        interpretation.setCodeSystem("system");
-
-        observationResult.getInterpretation().add(interpretation);
-        observationResult.getInterpretation().add(interpretation);
-        observationResult.getInterpretation().add(interpretation);
-
-        ImmunizationEvaluation evaluation = this.immunizationEvaluationConverter.convertToFhir(patient, immunization, observationResult);
-
-        assertEquals(3, evaluation.getDoseStatusReason().size());
-    }
-
-    @Test
     public void convertToCdsSetsIdFromId() {
         ImmunizationEvaluation evaluation = new ImmunizationEvaluation();
         evaluation.setId("my id");
@@ -466,72 +275,6 @@ public class ImmunizationEvaluationConverterTest {
         ObservationResult observationResult = this.immunizationEvaluationConverter.convertToCds(evaluation);
 
         assertEquals("my id", observationResult.getId().getRoot());
-    }
-
-    @Test
-    public void convertToCdsSetsTemplateForEachTemplateIdentifier() {
-        ImmunizationEvaluation evaluation = new ImmunizationEvaluation();
-        Identifier templateId = this.identifierFactory.create("templateId", "template");
-
-        evaluation.addIdentifier(templateId);
-        evaluation.addIdentifier(templateId);
-        evaluation.addIdentifier(templateId);
-
-        ObservationResult observationResult = this.immunizationEvaluationConverter.convertToCds(evaluation);
-
-        assertEquals(3, observationResult.getTemplateId().size());
-    }
-
-    @Test
-    public void convertToCdsSetsExtensionFromIdentifier() {
-        ImmunizationEvaluation evaluation = new ImmunizationEvaluation();
-        Identifier extensionId = this.identifierFactory.create("extensionId", "extension");
-
-        evaluation.addIdentifier(extensionId);
-
-        ObservationResult observationResult = this.immunizationEvaluationConverter.convertToCds(evaluation);
-
-        assertEquals("extension", observationResult.getId().getExtension());
-    }
-
-    @Test
-    public void convertToCdsAddsNoTemplateIdIfNoIdentifiers() {
-        ImmunizationEvaluation evaluation = new ImmunizationEvaluation();
-        ObservationResult observationResult = this.immunizationEvaluationConverter.convertToCds(evaluation);
-
-        assertEquals(0, observationResult.getTemplateId().size());
-    }
-
-    @Test
-    public void convertToCdsDoesNotSetExtensionIfNoIdentifiers() {
-        ImmunizationEvaluation evaluation = new ImmunizationEvaluation();
-        ObservationResult observationResult = this.immunizationEvaluationConverter.convertToCds(evaluation);
-
-        assertEquals("", observationResult.getId().getExtension());
-    }
-
-    @Test
-    public void convertToCdsDoesNotAddTemplateIdIfNoMatchingIdentifiers() {
-        ImmunizationEvaluation evaluation = new ImmunizationEvaluation();
-        Identifier identifier = this.identifierFactory.create("regular", "id");
-
-        evaluation.addIdentifier(identifier);
-
-        ObservationResult observationResult = this.immunizationEvaluationConverter.convertToCds(evaluation);
-
-        assertEquals(0, observationResult.getTemplateId().size());
-    }
-
-    @Test
-    public void convertToCdsDoesNotSetExtensionIfNoMatchingIdentifiers() {
-        ImmunizationEvaluation evaluation = new ImmunizationEvaluation();
-        Identifier identifier = this.identifierFactory.create("regular", "id");
-
-        evaluation.addIdentifier(identifier);
-
-        ObservationResult observationResult = this.immunizationEvaluationConverter.convertToCds(evaluation);
-
-        assertEquals("", observationResult.getId().getExtension());
     }
 
     @Test
@@ -582,19 +325,5 @@ public class ImmunizationEvaluationConverterTest {
         ObservationResult observationResult = this.immunizationEvaluationConverter.convertToCds(evaluation);
 
         assertEquals(0, observationResult.getInterpretation().size());
-    }
-
-    @Test
-    public void convertToCdsAddsInterpretationForEachDoseStatusReason() {
-        ImmunizationEvaluation evaluation = new ImmunizationEvaluation();
-        CodeableConcept doseStatusReason = new CodeableConcept();
-
-        evaluation.addDoseStatusReason(doseStatusReason);
-        evaluation.addDoseStatusReason(doseStatusReason);
-        evaluation.addDoseStatusReason(doseStatusReason);
-
-        ObservationResult observationResult = this.immunizationEvaluationConverter.convertToCds(evaluation);
-
-        assertEquals(3, observationResult.getInterpretation().size());
     }
 }
