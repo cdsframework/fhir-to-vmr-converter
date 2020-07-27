@@ -10,12 +10,11 @@ import org.cdsframework.messageconverter.fhir.convert.vmr.ImmunizationEvaluation
 import org.cdsframework.messageconverter.fhir.convert.vmr.ImmunizationRecommendationConverter;
 import org.cdsframework.messageconverter.fhir.convert.vmr.PatientConverter;
 import org.cdsframework.util.LogUtils;
-import org.hl7.fhir.r4.model.Extension;
-import org.hl7.fhir.r4.model.Identifier;
 import org.hl7.fhir.r4.model.Immunization;
 import org.hl7.fhir.r4.model.ImmunizationEvaluation;
 import org.hl7.fhir.r4.model.ImmunizationRecommendation;
 import org.hl7.fhir.r4.model.Patient;
+import org.hl7.fhir.r4.model.Reference;
 import org.json.JSONObject;
 import org.json.XML;
 import org.opencds.vmr.v1_0.schema.CDSInput;
@@ -91,6 +90,7 @@ public class Fhir2Vmr {
      * @param List<Identifier> identifiers : the list of identifiers containing the different id components for the SubstanceAdministrationEvent
      * @return SubstanceAdministrationEvent
      */
+    /*
     protected SubstanceAdministrationEvent findEvent(
         List<SubstanceAdministrationEvent> events,
         List<Identifier> identifiers
@@ -111,6 +111,17 @@ public class Fhir2Vmr {
             event -> identifier.getValue().equals(event.getId().getRoot())
                 && ((extension == null && event.getId().getExtension().isEmpty() ||
                     extension != null && extension.getId().equals(event.getId().getExtension())))
+        ).findFirst().orElse(null);
+    }
+    */
+    protected Immunization findEvent(List<Immunization> immunizations, Reference reference) {
+        String referenceId = reference.getReference();
+        referenceId = referenceId.substring(referenceId.lastIndexOf("/") + 1);
+
+        final String immunizationId = referenceId;
+
+        return immunizations.stream().filter(
+            immunization -> immunization.getId().equals(immunizationId)
         ).findFirst().orElse(null);
     }
 
@@ -181,18 +192,22 @@ public class Fhir2Vmr {
         CDSOutput output = this.getCdsOutputFromFhir(patient, observations, immunizations);
 
         for (ImmunizationEvaluation evaluation : evaluations) {
+            /*
             // find the parent substance administration event
             SubstanceAdministrationEvent parentEvent = this.findEvent(
                 output.getVmrOutput().getPatient().getClinicalStatements().getSubstanceAdministrationEvents().getSubstanceAdministrationEvent(),
                 evaluation.getIdentifier()
             );
+            */
 
-            Immunization immunization = evaluation.getImmunizationEventTarget();
+            Immunization immunization = this.findEvent(immunizations, evaluation.getImmunizationEvent());
 
             SubstanceAdministrationEvent event = this.immunizationConverter.convertToCds(immunization);
             RelatedClinicalStatement relatedClinicalStatement = new RelatedClinicalStatement();
             relatedClinicalStatement.setSubstanceAdministrationEvent(event);
-            parentEvent.getRelatedClinicalStatement().add(relatedClinicalStatement);
+            //parentEvent.getRelatedClinicalStatement().add(relatedClinicalStatement);
+
+            output.getVmrOutput().getPatient().getClinicalStatements().getSubstanceAdministrationEvents().getSubstanceAdministrationEvent().add(event);
 
             RelatedClinicalStatement evaluationRelatedClinicalStatement = new RelatedClinicalStatement();
             ObservationResult result = this.immunizationEvaluationConverter.convertToCds(evaluation);

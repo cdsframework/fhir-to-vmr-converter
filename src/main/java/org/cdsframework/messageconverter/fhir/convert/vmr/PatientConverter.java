@@ -4,16 +4,16 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
+import java.util.UUID;
 
 import org.cdsframework.cds.vmr.CdsInputWrapper;
 import org.cdsframework.ice.input.IceCdsInputWrapper;
 import org.cdsframework.messageconverter.fhir.convert.utils.FhirConstants;
 import org.cdsframework.messageconverter.fhir.convert.utils.IdentifierFactory;
 import org.cdsframework.util.LogUtils;
-import org.hl7.fhir.r4.model.CodeableConcept;
 import org.hl7.fhir.r4.model.Enumerations.AdministrativeGender;
 import org.hl7.fhir.r4.model.HumanName;
-import org.hl7.fhir.r4.model.Identifier;
+import org.hl7.fhir.r4.model.Meta;
 import org.hl7.fhir.r4.model.Patient;
 import org.hl7.fhir.r4.model.StringType;
 import org.json.JSONObject;
@@ -21,7 +21,6 @@ import org.opencds.vmr.v1_0.schema.CD;
 import org.opencds.vmr.v1_0.schema.CDSOutput;
 import org.opencds.vmr.v1_0.schema.EvaluatedPerson;
 import org.opencds.vmr.v1_0.schema.EvaluatedPerson.Demographics;
-import org.opencds.vmr.v1_0.schema.II;
 import org.opencds.vmr.v1_0.schema.TS;
 import org.opencds.vmr.v1_0.schema.VMR;
 
@@ -41,7 +40,7 @@ public class PatientConverter implements CdsConverter, FhirConverter<EvaluatedPe
     /**
      * Convert a json object of fhir data to cds format. Save the results to the ice
      * cds input wrapper.
-     * 
+     *
      * @param IceCdsInputWrapper wrapper : wrapper object, used to store patient
      *                           data
      * @param JSONObject         data : a json object of fhir data
@@ -55,7 +54,7 @@ public class PatientConverter implements CdsConverter, FhirConverter<EvaluatedPe
     /**
      * Convert a FHIR compliant Patient object into an OpenCDS compliant
      * EvaluatedPerson object.
-     * 
+     *
      * @param Patient patient : the FHIR compliant object to convert
      * @return EvaluatedPerson
      */
@@ -64,25 +63,6 @@ public class PatientConverter implements CdsConverter, FhirConverter<EvaluatedPe
         Demographics demographics = new Demographics();
 
         CD gender = this.administrativeGenderConverter.convertToCds(patient.getGender());
-        II id = new II();
-
-        id.setRoot(patient.getId());
-        
-        // look for the identifier for id extension and gender code system
-        for (Identifier identifier : patient.getIdentifier()) {
-            CodeableConcept concept = identifier.getType();
-
-            if (concept.getText() == "idExtension") {
-                id.setExtension(identifier.getValue());
-            } else if (concept.getText() == "genderCodeSystem") {
-                gender.setCodeSystem(identifier.getValue());
-            } else if (concept.getText() == "templateId") {
-                II templateId = new II();
-                templateId.setRoot(identifier.getValue());
-
-                person.getTemplateId().add(templateId);
-            }
-        }
 
         try {
             SimpleDateFormat birthDateFormat = new SimpleDateFormat("yyyymmdd");
@@ -98,9 +78,7 @@ public class PatientConverter implements CdsConverter, FhirConverter<EvaluatedPe
         }
 
         demographics.setGender(gender);
-
         person.setDemographics(demographics);
-        person.setId(id);
 
         return person;
     }
@@ -108,7 +86,7 @@ public class PatientConverter implements CdsConverter, FhirConverter<EvaluatedPe
     /**
      * Convert a json object of fhir data to cds format. Save the results to the cds
      * input wrapper.
-     * 
+     *
      * @param CdsInputWrapper wrapper : wrapper object, used to store patient data
      * @param JSONObject      data : a json object of fhir data
      * @return CdsInputWrapper object updated with fhir data
@@ -138,7 +116,7 @@ public class PatientConverter implements CdsConverter, FhirConverter<EvaluatedPe
     /**
      * To make parsing the patient data easier, convert to a patient object to
      * easily get the data out.
-     * 
+     *
      * @param JSONObject data : the patient fhir data
      * @return a patient object populated via the fhir data
      */
@@ -162,7 +140,7 @@ public class PatientConverter implements CdsConverter, FhirConverter<EvaluatedPe
      * Converts a CDSOutput object into a Patient record. The patient data exists in
      * the VMR object inside of the EvaluatedPerson object. That object is passed to
      * a method to convert the EvaluatedPerson object to a Patient.
-     * 
+     *
      * @param CDSOutput : the cds output object to convert to a Patient object
      * @return a patient object
      */
@@ -177,20 +155,24 @@ public class PatientConverter implements CdsConverter, FhirConverter<EvaluatedPe
      * Convert an EvaluatedPerson from a VMR record to the FHIR version of the
      * Patient. For now, it only saves the id to be used as a reference but this can
      * be updated to include additional metadata.
-     * 
+     *
      * @param EvaluatedPerson person : the evaluated person from a VMR record
      * @return a patient object
      */
     public Patient convertToFhir(EvaluatedPerson person) throws IllegalArgumentException {
         Patient patient = new Patient();
 
+        Meta meta = new Meta();
+        meta.addProfile("http://hl7.org/fhir/us/ImmunizationFHIRDS/StructureDefinition/immds-patient");
+
+        patient.setMeta(meta);
+        patient.setId(UUID.randomUUID().toString());
+
         try {
             AdministrativeGender gender = this.administrativeGenderConverter.convertToFhir(
                 person.getDemographics().getGender()
             );
-            Identifier genderSystem = this.identifierFactory.create("genderCodeSystem", person.getDemographics().getGender().getCodeSystem());
 
-            patient.addIdentifier(genderSystem);
             patient.setGender(gender);
         } catch (NullPointerException exception) {
             this.logger.debug("convertToFhir", "No gender found in EvaluatedPerson");
@@ -205,19 +187,6 @@ public class PatientConverter implements CdsConverter, FhirConverter<EvaluatedPe
             this.logger.debug("convertToFhir", "No birthtime found in EvaluatedPerson");
         } catch (ParseException exception) {
             this.logger.debug("convertToFhir", "No birthtime in EvaluatedPerson is improperly formatted");
-        }
-
-        for (II templateId : person.getTemplateId()) {
-            Identifier templateIdentifier = this.identifierFactory.create("templateId", templateId.getRoot());
-            patient.addIdentifier(templateIdentifier);
-        }
-
-        try {
-            Identifier id = this.identifierFactory.create("idExtension", person.getId().getExtension());
-            patient.setId(person.getId().getRoot());
-            patient.addIdentifier(id);
-        } catch (NullPointerException exception) {
-            this.logger.debug("convertToFhir", "No id found for person");
         }
 
         return patient;

@@ -161,9 +161,9 @@ public class Vmr2FhirTest {
         SubstanceAdministrationProposals substanceAdministrationProposals = new SubstanceAdministrationProposals();
         this.customOutput.getVmrOutput().getPatient().getClinicalStatements().setSubstanceAdministrationProposals(substanceAdministrationProposals);
 
-        List<ImmunizationRecommendation> recommendations = this.vmr2Fhir.getRecommendations(this.customOutput);
+        ImmunizationRecommendation recommendation = this.vmr2Fhir.getRecommendation(this.customOutput);
 
-        assertEquals(0, recommendations.size());
+        assertEquals(0, recommendation.getRecommendation().size());
     }
 
     @Test
@@ -176,20 +176,20 @@ public class Vmr2FhirTest {
         substanceAdministrationProposals.getSubstanceAdministrationProposal().add(proposal);
         substanceAdministrationProposals.getSubstanceAdministrationProposal().add(proposal);
 
-        List<ImmunizationRecommendation> recommendations = this.vmr2Fhir.getRecommendations(this.customOutput);
+        ImmunizationRecommendation recommendation = this.vmr2Fhir.getRecommendation(this.customOutput);
 
-        assertEquals(3, recommendations.size());
+        assertEquals(3, recommendation.getRecommendation().size());
     }
 
     @Test
-    public void getImmunizationsReturnsEmptyListIfSubstanceAdministrationEventsHasNoSubstanceAdministrationEvents() {
+    public void getImmunizationsReturnsEmptyListIfSubstanceAdministrationEventsHasNoSubstanceAdministrationEvents() throws ParseException {
         List<Immunization> immunizations = this.vmr2Fhir.getImmunizations(this.customOutput);
 
         assertEquals(0, immunizations.size());
     }
 
     @Test
-    public void getImmunizationsReturnsImmunizationForEachSubstanceAdministrationEvent() {
+    public void getImmunizationsReturnsImmunizationForEachSubstanceAdministrationEvent() throws ParseException {
         SubstanceAdministrationEvents substanceAdministrationEvents = new SubstanceAdministrationEvents();
         this.customOutput.getVmrOutput().getPatient().getClinicalStatements().setSubstanceAdministrationEvents(substanceAdministrationEvents);
 

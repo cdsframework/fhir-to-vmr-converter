@@ -3,15 +3,18 @@ package org.cdsframework.messageconverter.fhir.convert.vmr;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
+import java.util.UUID;
 
 import org.cdsframework.messageconverter.fhir.convert.utils.IdentifierFactory;
 import org.cdsframework.util.LogUtils;
 import org.hl7.fhir.r4.model.CodeableConcept;
-import org.hl7.fhir.r4.model.Identifier;
 import org.hl7.fhir.r4.model.ImmunizationRecommendation;
 import org.hl7.fhir.r4.model.ImmunizationRecommendation.ImmunizationRecommendationRecommendationComponent;
 import org.hl7.fhir.r4.model.ImmunizationRecommendation.ImmunizationRecommendationRecommendationDateCriterionComponent;
+import org.hl7.fhir.r4.model.Meta;
 import org.hl7.fhir.r4.model.Patient;
+import org.hl7.fhir.r4.model.Reference;
 import org.opencds.vmr.v1_0.schema.AdministrableSubstance;
 import org.opencds.vmr.v1_0.schema.CD;
 import org.opencds.vmr.v1_0.schema.II;
@@ -41,141 +44,130 @@ public class ImmunizationRecommendationConverter {
      * @param CDSOutput data : object containing data for an immunization recommendation
      * @return ImmunizationRecommendation
      */
-    public ImmunizationRecommendation convertToFhir(Patient patient, SubstanceAdministrationProposal proposal) {
+    public ImmunizationRecommendation convertToFhir(Patient patient, List<SubstanceAdministrationProposal> proposals) {
         ImmunizationRecommendation recommendation = new ImmunizationRecommendation();
-        ImmunizationRecommendationRecommendationComponent component = new ImmunizationRecommendationRecommendationComponent();
 
-        recommendation.setPatientTarget(patient);
+        recommendation.setId(UUID.randomUUID().toString());
 
-        try {
-            recommendation.setId(proposal.getId().getRoot());
-        } catch (NullPointerException exception) {
-            this.logger.debug("convertToFhir", "Cannot set id");
-        }
+        Meta meta = new Meta();
+        meta.addProfile("http://hl7.org/fhir/us/ImmunizationFHIRDS/StructureDefinition/immds-immunizationrecommendation");
 
-        try {
-            IVLTS proposedTimeInterval = proposal.getProposedAdministrationTimeInterval();
+        recommendation.setMeta(meta);
 
-            String low = proposedTimeInterval.getLow();
-            String high = proposedTimeInterval.getHigh();
+        Reference patientReference = new Reference();
+        patientReference.setReference("Patient/" + patient.getId());
 
-            if (low != null && !low.isEmpty()) {
-                Date proposedDate = this.dateFormat.parse(proposedTimeInterval.getLow());
-                ImmunizationRecommendationRecommendationDateCriterionComponent recommendedTime = new ImmunizationRecommendationRecommendationDateCriterionComponent();
+        recommendation.setPatient(patientReference);
 
-                CodeableConcept lowConcept = new CodeableConcept();
-                lowConcept.setText("low");
-
-                recommendedTime.setValue(proposedDate);
-                recommendedTime.setCode(lowConcept);
-
-                component.addDateCriterion(recommendedTime);
-            }
-
-            if (high != null && !high.isEmpty()) {
-                Date proposedDate = this.dateFormat.parse(proposedTimeInterval.getHigh());
-
-                ImmunizationRecommendationRecommendationDateCriterionComponent recommendedTime = new ImmunizationRecommendationRecommendationDateCriterionComponent();
-
-                CodeableConcept lowConcept = new CodeableConcept();
-                lowConcept.setText("high");
-
-                recommendedTime.setValue(proposedDate);
-                recommendedTime.setCode(lowConcept);
-
-                component.addDateCriterion(recommendedTime);
-            }
-        } catch (NullPointerException exception) {
-            this.logger.debug("convertToFhir", "Cannot set proposed date");
-        } catch (ParseException exception) {
-            this.logger.debug("convertToFhir", "Improperly formatted date");
-        }
-
-        // add in the template ids
-        for (II templateId : proposal.getTemplateId()) {
-            Identifier identifier = this.identifierFactory.create("templateId", templateId.getRoot());
-            recommendation.addIdentifier(identifier);
-        }
-
-        try {
-            CD generalPurpose = proposal.getSubstanceAdministrationGeneralPurpose();
-            CodeableConcept concept = this.codeableConceptConverter.convertToFhir(generalPurpose);
-
-            component.addContraindicatedVaccineCode(concept);
-        } catch (NullPointerException exception) {
-            this.logger.debug("convertToFhir", "Cannot set substance administration general purpose");
-        }
-
-        // add in the vaccine
-        try {
-            // if we can't extract the vaccine code, log it but continue
-            CD proposalVaccineCode = proposal.getSubstance().getSubstanceCode();
-            CodeableConcept vaccineCode = this.codeableConceptConverter.convertToFhir(proposalVaccineCode);
+        for (SubstanceAdministrationProposal proposal : proposals) {
+            ImmunizationRecommendationRecommendationComponent component = new ImmunizationRecommendationRecommendationComponent();
 
             try {
-                vaccineCode.setId(proposal.getSubstance().getId().getRoot());
+                IVLTS proposedTimeInterval = proposal.getProposedAdministrationTimeInterval();
+
+                String low = proposedTimeInterval.getLow();
+                String high = proposedTimeInterval.getHigh();
+
+                if (low != null && !low.isEmpty()) {
+                    Date proposedDate = this.dateFormat.parse(proposedTimeInterval.getLow());
+                    ImmunizationRecommendationRecommendationDateCriterionComponent recommendedTime = new ImmunizationRecommendationRecommendationDateCriterionComponent();
+
+                    CodeableConcept dateConcept = new CodeableConcept();
+
+                    recommendedTime.setValue(proposedDate);
+                    recommendedTime.setCode(dateConcept);
+
+                    component.addDateCriterion(recommendedTime);
+                } else if (high != null && !high.isEmpty()) {
+                    Date proposedDate = this.dateFormat.parse(proposedTimeInterval.getHigh());
+
+                    ImmunizationRecommendationRecommendationDateCriterionComponent recommendedTime = new ImmunizationRecommendationRecommendationDateCriterionComponent();
+
+                    CodeableConcept dateConcept = new CodeableConcept();
+
+                    recommendedTime.setValue(proposedDate);
+                    recommendedTime.setCode(dateConcept);
+
+                    component.addDateCriterion(recommendedTime);
+                }
             } catch (NullPointerException exception) {
-                this.logger.debug("convertToFhir", "Cannot set vaccine code id");
+                this.logger.debug("convertToFhir", "Cannot set proposed date");
+            } catch (ParseException exception) {
+                this.logger.debug("convertToFhir", "Improperly formatted date");
             }
 
-            component.addVaccineCode(vaccineCode);
-        } catch (NullPointerException exception) {
-            logger.debug("convertToFhir", "No vaccine code found in packet.");
-        }
+            try {
+                CD generalPurpose = proposal.getSubstanceAdministrationGeneralPurpose();
+                CodeableConcept concept = this.codeableConceptConverter.convertToFhir(generalPurpose);
 
-        // if no observation results, we are done
-        if (proposal.getRelatedClinicalStatement().isEmpty()) {
-            recommendation.addRecommendation(component);
-            return recommendation;
-        }
+                component.addContraindicatedVaccineCode(concept);
+            } catch (NullPointerException exception) {
+                this.logger.debug("convertToFhir", "Cannot set substance administration general purpose");
+            }
 
-        for (RelatedClinicalStatement relatedClinicalStatement : proposal.getRelatedClinicalStatement()) {
-            ImmunizationRecommendationRecommendationComponent newRecommendation = component.copy();
-            ObservationResult observationResult = relatedClinicalStatement.getObservationResult();
+            // add in the vaccine
+            try {
+                // if we can't extract the vaccine code, log it but continue
+                CD proposalVaccineCode = proposal.getSubstance().getSubstanceCode();
+                CodeableConcept vaccineCode = this.codeableConceptConverter.convertToFhir(proposalVaccineCode);
 
-            if (observationResult == null) {
+                try {
+                    vaccineCode.setId(proposal.getSubstance().getId().getRoot());
+                } catch (NullPointerException exception) {
+                    this.logger.debug("convertToFhir", "Cannot set vaccine code id");
+                }
+
+                component.addVaccineCode(vaccineCode);
+            } catch (NullPointerException exception) {
+                logger.debug("convertToFhir", "No vaccine code found in packet.");
+            }
+
+            // if no observation results, we are done
+            if (proposal.getRelatedClinicalStatement().isEmpty()) {
+                recommendation.addRecommendation(component);
                 continue;
             }
 
-            try {
-                newRecommendation.setId(observationResult.getId().getRoot());
-            } catch (NullPointerException exception) {
-                this.logger.debug("convertToFhir", "Cannot set recommendation id");
+            for (RelatedClinicalStatement relatedClinicalStatement : proposal.getRelatedClinicalStatement()) {
+                ObservationResult observationResult = relatedClinicalStatement.getObservationResult();
+
+                if (observationResult == null) {
+                    continue;
+                }
+
+                try {
+                    component.setId(observationResult.getId().getRoot());
+                } catch (NullPointerException exception) {
+                    this.logger.debug("convertToFhir", "Cannot set recommendation id");
+                }
+
+                try {
+                    CD proposalTargetDisease = observationResult.getObservationFocus();
+                    CodeableConcept disease = this.codeableConceptConverter.convertToFhir(proposalTargetDisease);
+                    component.setTargetDisease(disease);
+                } catch (NullPointerException exception) {
+                    this.logger.debug("convertToFhir", "Cannot set target disease");
+                }
+
+                try {
+                    CD proposalForecast = observationResult.getObservationValue().getConcept();
+                    CodeableConcept forecast = this.codeableConceptConverter.convertToFhir(proposalForecast);
+                    component.setForecastStatus(forecast);
+                } catch (NullPointerException exception) {
+                    this.logger.debug("convertToFhir", "Cannot add forecast reason");
+                }
+
+                for (CD interpretation : observationResult.getInterpretation()) {
+                    CodeableConcept forecastReason = this.codeableConceptConverter.convertToFhir(interpretation);
+                    component.addForecastReason(forecastReason);
+                }
+
+                recommendation.addRecommendation(component);
             }
 
-            try {
-                CD proposalTargetDisease = observationResult.getObservationFocus();
-                CodeableConcept disease = this.codeableConceptConverter.convertToFhir(proposalTargetDisease);
-                newRecommendation.setTargetDisease(disease);
-            } catch (NullPointerException exception) {
-                this.logger.debug("convertToFhir", "Cannot set target disease");
+            if (recommendation.getRecommendation().size() == 0) {
+                recommendation.addRecommendation(component);
             }
-
-            for (II templateId : observationResult.getTemplateId()) {
-                Identifier identifier = this.identifierFactory.create("observationTemplateId", templateId.getRoot());
-                identifier.setSystem(observationResult.getId().getRoot());
-
-                recommendation.addIdentifier(identifier);
-            }
-
-            try {
-                CD proposalForecast = observationResult.getObservationValue().getConcept();
-                CodeableConcept forecast = this.codeableConceptConverter.convertToFhir(proposalForecast);
-                newRecommendation.setForecastStatus(forecast);
-            } catch (NullPointerException exception) {
-                this.logger.debug("convertToFhir", "Cannot add forecast reason");
-            }
-
-            for (CD interpretation : observationResult.getInterpretation()) {
-                CodeableConcept forecastReason = this.codeableConceptConverter.convertToFhir(interpretation);
-                newRecommendation.addForecastReason(forecastReason);
-            }
-
-            recommendation.addRecommendation(newRecommendation);
-        }
-
-        if (recommendation.getRecommendation().size() == 0) {
-            recommendation.addRecommendation(component);
         }
 
         return recommendation;
@@ -197,16 +189,6 @@ public class ImmunizationRecommendationConverter {
         II id = new II();
         id.setRoot(recommendation.getId());
         proposal.setId(id);
-
-        // add in the template ids
-        for (Identifier identifier : recommendation.getIdentifier()) {
-            if (identifier.getType().getText().equals("templateId")) {
-                II templateId = new II();
-                templateId.setRoot(identifier.getValue());
-
-                proposal.getTemplateId().add(templateId);
-            }
-        }
 
         for (ImmunizationRecommendationRecommendationComponent component : recommendation.getRecommendation()) {
             if (proposal.getProposedAdministrationTimeInterval() == null) {
@@ -270,21 +252,6 @@ public class ImmunizationRecommendationConverter {
             if (!targetDisease.isEmpty()) {
                 CD observationFocus = this.codeableConceptConverter.convertToCds(targetDisease);
                 observationResult.setObservationFocus(observationFocus);
-            }
-
-            // get the template id
-            for (Identifier identifier : recommendation.getIdentifier()) {
-                try {
-                    if (identifier.getType().getText().equals("observationTemplateId")
-                        && identifier.getSystem().equals(observationResultId.getRoot())
-                    ) {
-                        II templateId = new II();
-                        templateId.setRoot(identifier.getValue());
-                        observationResult.getTemplateId().add(templateId);
-                    }
-                } catch (NullPointerException exception) {
-                    this.logger.debug("convertToCds", "Cannot set template id");
-                }
             }
 
             // get the observation value

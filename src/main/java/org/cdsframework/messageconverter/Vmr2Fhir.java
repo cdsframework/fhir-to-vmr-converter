@@ -19,7 +19,6 @@ import org.opencds.vmr.v1_0.schema.EvaluatedPerson.ClinicalStatements.SubstanceA
 import org.opencds.vmr.v1_0.schema.ObservationResult;
 import org.opencds.vmr.v1_0.schema.RelatedClinicalStatement;
 import org.opencds.vmr.v1_0.schema.SubstanceAdministrationEvent;
-import org.opencds.vmr.v1_0.schema.SubstanceAdministrationProposal;
 
 /**
  * @author Brian Lamb
@@ -56,12 +55,11 @@ public class Vmr2Fhir {
             for (RelatedClinicalStatement outerRelatedClinicalStatement : outerSubstanceAdministrationEvent.getRelatedClinicalStatement()) {
                 SubstanceAdministrationEvent substanceAdministrationEvent = outerRelatedClinicalStatement.getSubstanceAdministrationEvent();
 
-                Immunization outerImmunization = this.immunizationConverter.convertToFhir(outerSubstanceAdministrationEvent);
-                Immunization immunization = this.immunizationConverter.convertToFhir(substanceAdministrationEvent);
+                Immunization immunization = this.immunizationConverter.convertToFhir(patient, substanceAdministrationEvent);
 
                 for (RelatedClinicalStatement relatedClinicalStatement : substanceAdministrationEvent.getRelatedClinicalStatement()) {
                     ObservationResult observationResult = relatedClinicalStatement.getObservationResult();
-                    ImmunizationEvaluation immunizationEvaluation = this.immunizationEvaluationConverter.convertToFhir(patient, immunization, outerImmunization, observationResult);
+                    ImmunizationEvaluation immunizationEvaluation = this.immunizationEvaluationConverter.convertToFhir(patient, immunization, observationResult);
                     evaluations.add(immunizationEvaluation);
                 }
             }
@@ -78,10 +76,15 @@ public class Vmr2Fhir {
      * @return List<Immunization>
      */
     public List<Immunization> getObservations(CDSInput input) {
+        Patient patient = this.patientConverter.convertToFhir(input.getVmrInput().getPatient());
+        return this.getObservations(input, patient);
+    }
+
+    public List<Immunization> getObservations(CDSInput input, Patient patient) {
         List<Immunization> observations = new ArrayList<Immunization>();
 
         for (ObservationResult result : input.getVmrInput().getPatient().getClinicalStatements().getObservationResults().getObservationResult()) {
-            observations.add(this.immunizationConverter.convertToFhir(result));
+            observations.add(this.immunizationConverter.convertToFhir(patient, result));
         }
 
         return observations;
@@ -94,11 +97,16 @@ public class Vmr2Fhir {
      * @param CDSOutput output : the output object containing observation data
      * @return List<Immunization>
      */
-    public List<Immunization> getObservations(CDSOutput output) {
+    public List<Immunization> getObservations(CDSOutput output) throws ParseException {
+        Patient patient = this.patientConverter.convertToFhir(output);
+        return this.getObservations(output, patient);
+    }
+
+    public List<Immunization> getObservations(CDSOutput output, Patient patient) throws ParseException {
         List<Immunization> observations = new ArrayList<Immunization>();
 
         for (ObservationResult result : output.getVmrOutput().getPatient().getClinicalStatements().getObservationResults().getObservationResult()) {
-            observations.add(this.immunizationConverter.convertToFhir(result));
+            observations.add(this.immunizationConverter.convertToFhir(patient, result));
         }
 
         return observations;
@@ -111,16 +119,11 @@ public class Vmr2Fhir {
      * @param ImmunizationRecommendation output : object containing an immunization recommendation request
      * @return ImmunizationRecommendation
      */
-    public List<ImmunizationRecommendation> getRecommendations(CDSOutput output) throws IllegalArgumentException, ParseException {
-        List<ImmunizationRecommendation> recommendations = new ArrayList<ImmunizationRecommendation>();
+    public ImmunizationRecommendation getRecommendation(CDSOutput output) throws IllegalArgumentException, ParseException {
         Patient patient = this.patientConverter.convertToFhir(output);
+        ImmunizationRecommendation recommendation = this.immunizationRecommendationConverter.convertToFhir(patient, output.getVmrOutput().getPatient().getClinicalStatements().getSubstanceAdministrationProposals().getSubstanceAdministrationProposal());
 
-        for (SubstanceAdministrationProposal proposal : output.getVmrOutput().getPatient().getClinicalStatements().getSubstanceAdministrationProposals().getSubstanceAdministrationProposal()) {
-            ImmunizationRecommendation recommendation = this.immunizationRecommendationConverter.convertToFhir(patient, proposal);
-            recommendations.add(recommendation);
-        }
-
-        return recommendations;
+        return recommendation;
     }
 
     /**
@@ -142,11 +145,16 @@ public class Vmr2Fhir {
      * @return List<Immunization>
      */
     public List<Immunization> getImmunizations(CDSInput input) {
+        Patient patient = this.patientConverter.convertToFhir(input.getVmrInput().getPatient());
+        return this.getImmunizations(input, patient);
+    }
+
+    public List<Immunization> getImmunizations(CDSInput input, Patient patient) {
         List<Immunization> immunizations = new ArrayList<Immunization>();
 
         try {
             for (SubstanceAdministrationEvent event : input.getVmrInput().getPatient().getClinicalStatements().getSubstanceAdministrationEvents().getSubstanceAdministrationEvent()) {
-                immunizations.add(this.immunizationConverter.convertToFhir(event));
+                immunizations.add(this.immunizationConverter.convertToFhir(patient, event));
             }
         } catch (NullPointerException exception) {
             this.logger.debug("getImmunizations", "No substance administration events found");
@@ -162,12 +170,17 @@ public class Vmr2Fhir {
      * @param CDSOutput output : object containing immunization data
      * @return List<Immunization>
      */
-    public List<Immunization> getImmunizations(CDSOutput output) {
+    public List<Immunization> getImmunizations(CDSOutput output) throws ParseException {
+        Patient patient = this.patientConverter.convertToFhir(output);
+        return this.getImmunizations(output, patient);
+    }
+
+    public List<Immunization> getImmunizations(CDSOutput output, Patient patient) {
         List<Immunization> immunizations = new ArrayList<Immunization>();
 
         try {
             for (SubstanceAdministrationEvent event : output.getVmrOutput().getPatient().getClinicalStatements().getSubstanceAdministrationEvents().getSubstanceAdministrationEvent()) {
-                immunizations.add(this.immunizationConverter.convertToFhir(event));
+                immunizations.add(this.immunizationConverter.convertToFhir(patient, event));
             }
         } catch (NullPointerException exception) {
             this.logger.debug("getImmunizations", "No substance administration events found");

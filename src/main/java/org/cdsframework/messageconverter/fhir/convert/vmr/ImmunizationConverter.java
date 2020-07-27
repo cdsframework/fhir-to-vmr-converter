@@ -4,6 +4,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
+import java.util.UUID;
 
 import org.cdsframework.cds.vmr.CdsInputWrapper;
 import org.cdsframework.ice.input.IceCdsInputWrapper;
@@ -14,13 +15,15 @@ import org.cdsframework.util.support.cds.Config;
 import org.hl7.fhir.r4.model.CodeableConcept;
 import org.hl7.fhir.r4.model.Coding;
 import org.hl7.fhir.r4.model.DateTimeType;
-import org.hl7.fhir.r4.model.Identifier;
 import org.hl7.fhir.r4.model.Immunization;
+import org.hl7.fhir.r4.model.Immunization.ImmunizationStatus;
+import org.hl7.fhir.r4.model.Meta;
+import org.hl7.fhir.r4.model.Patient;
+import org.hl7.fhir.r4.model.Reference;
 import org.json.JSONObject;
 import org.opencds.vmr.v1_0.schema.AdministrableSubstance;
 import org.opencds.vmr.v1_0.schema.CD;
 import org.opencds.vmr.v1_0.schema.EvaluatedPerson.ClinicalStatements.SubstanceAdministrationEvents;
-import org.opencds.vmr.v1_0.schema.II;
 import org.opencds.vmr.v1_0.schema.IVLTS;
 import org.opencds.vmr.v1_0.schema.ObservationResult;
 import org.opencds.vmr.v1_0.schema.ObservationResult.ObservationValue;
@@ -33,7 +36,7 @@ import ca.uhn.fhir.parser.StrictErrorHandler;
 /**
  * @author sdn
  */
-public class ImmunizationConverter implements CdsConverter, FhirConverter<SubstanceAdministrationEvent, Immunization> {
+public class ImmunizationConverter implements CdsConverter {
     protected CodeableConceptConverter codeableConceptConverter = new CodeableConceptConverter();
     protected ImmunizationStatusConverter immunizationStatusConverter = new ImmunizationStatusConverter();
 
@@ -52,22 +55,6 @@ public class ImmunizationConverter implements CdsConverter, FhirConverter<Substa
     public ObservationResult convertToCdsObservation(Immunization immunization) {
         ObservationResult observation = new ObservationResult();
 
-        // template id is stored with the Identifiers and distinguished by the concept type
-        for (Identifier identifier : immunization.getIdentifier()) {
-            CodeableConcept concept = identifier.getType();
-
-            if (concept.getText() == "templateId") {
-                II templateId = new II();
-                templateId.setRoot(identifier.getValue());
-
-                observation.getTemplateId().add(templateId);
-            }
-        }
-
-        II id = new II();
-        id.setRoot(immunization.getId());
-        observation.setId(id);
-
         CD observationFocus = this.codeableConceptConverter.convertToCds(immunization.getVaccineCode());
         observation.setObservationFocus(observationFocus);
 
@@ -80,12 +67,6 @@ public class ImmunizationConverter implements CdsConverter, FhirConverter<Substa
             observation.setObservationEventTime(observationEventTime);
         } catch (NullPointerException exception) {
             this.logger.debug("convertToCdsObservation", "No date found in immunization");
-        }
-
-        // usually there is only one but this allows for multiples
-        for (CodeableConcept reasonCode : immunization.getReasonCode()) {
-            CD interpretation = this.codeableConceptConverter.convertToCds(reasonCode);
-            observation.getInterpretation().add(interpretation);
         }
 
         CodeableConcept statusReason = immunization.getStatusReason();
@@ -128,49 +109,23 @@ public class ImmunizationConverter implements CdsConverter, FhirConverter<Substa
         SubstanceAdministrationEvent event = new SubstanceAdministrationEvent();
         AdministrableSubstance substance = new AdministrableSubstance();
 
-        II id = new II();
-        id.setRoot(immunization.getId());
-
         if (immunization.getStatus() != null) {
             event.setIsValid(this.immunizationStatusConverter.convertToCds(immunization.getStatus()));
-        }
-
-        try {
-            II substanceId = new II();
-            substanceId.setRoot(immunization.getVaccineCode().getId());
-            substance.setId(substanceId);
-        } catch (NullPointerException exception) {
-            this.logger.debug("convertToCds", "No vaccine code found");
         }
 
         try {
             // this is safe because if we can't access the date, we don't need to set it anyway
             IVLTS administrationTimeInterval = new IVLTS();
             administrationTimeInterval.setHigh(
-                this.dateFormat.format(immunization.getRecorded())
+                this.dateFormat.format(immunization.getOccurrenceDateTimeType().getValue())
             );
             administrationTimeInterval.setLow(
-                this.dateFormat.format(immunization.getRecorded())
+                this.dateFormat.format(immunization.getOccurrenceDateTimeType().getValue())
             );
 
             event.setAdministrationTimeInterval(administrationTimeInterval);
         } catch (NullPointerException exception) {
             this.logger.debug("convertToCds", "No date found in immunization");
-        }
-
-        // template id is stored with the Identifiers and distinguished by the concept type
-        for (Identifier identifier : immunization.getIdentifier()) {
-            CodeableConcept concept = identifier.getType();
-
-            // there is usually only one of these but this allows for multiple
-            if (concept.getText() == "templateId") {
-                II templateId = new II();
-                templateId.setRoot(identifier.getValue());
-
-                event.getTemplateId().add(templateId);
-            } else if (concept.getText() == "idExtension") {
-                id.setExtension(identifier.getValue());
-            }
         }
 
         CD code = this.codeableConceptConverter.convertToCds(immunization.getVaccineCode());
@@ -179,7 +134,6 @@ public class ImmunizationConverter implements CdsConverter, FhirConverter<Substa
         substance.setSubstanceCode(code);
 
         event.setSubstance(substance);
-        event.setId(id);
 
         event.setSubstanceAdministrationGeneralPurpose(generalPurpose);
 
@@ -268,21 +222,20 @@ public class ImmunizationConverter implements CdsConverter, FhirConverter<Substa
      * @param ObservationResult result : the OpenCDS object containing the immunization data
      * @return Immunization
      */
-    public Immunization convertToFhir(ObservationResult result) {
+    public Immunization convertToFhir(Patient patient, ObservationResult result) {
         Immunization immunization = new Immunization();
 
-        // there is usually only one template id but we can have several
-        // we mark it as a template id and throw it in identifiers
-        for (II templateId : result.getTemplateId()) {
-            Identifier templateIdentifier = this.identifierFactory.create("templateId", templateId.getRoot());
-            immunization.addIdentifier(templateIdentifier);
-        }
+        Meta meta = new Meta();
+        meta.addProfile("http://hl7.org/fhir/us/ImmunizationFHIRDS/StructureDefinition/immds-immunization");
 
-        try {
-            immunization.setId(result.getId().getRoot());
-        } catch (NullPointerException exception) {
-            this.logger.debug("convertToFhir", "No id found in observation result");
-        }
+        immunization.setMeta(meta);
+        immunization.setId(UUID.randomUUID().toString());
+        immunization.setStatus(ImmunizationStatus.COMPLETED);
+
+        Reference patientReference = new Reference();
+        patientReference.setReference("Patient/" + patient.getId());
+
+        immunization.setPatient(patientReference);
 
         try {
             CodeableConcept vaccineCode = this.codeableConceptConverter.convertToFhir(result.getObservationFocus());
@@ -293,20 +246,15 @@ public class ImmunizationConverter implements CdsConverter, FhirConverter<Substa
 
         try {
             // this is okay because if the date is bad, it shouldn't halt execution
-            Date observationEventTime = this.dateFormat.parse(result.getObservationEventTime().getHigh());
-            DateTimeType occurrence = new DateTimeType(observationEventTime);
+            DateTimeType dateTime = new DateTimeType();
+            Date administeredDate = this.dateFormat.parse(result.getObservationEventTime().getHigh());
+            dateTime.setValue(administeredDate);
 
-            immunization.setOccurrence(occurrence);
+            immunization.setOccurrence(dateTime);
         } catch (ParseException exception) {
             this.logger.debug("convertToFhir", "Improperly formatted observation event time");
         } catch (NullPointerException exception) {
             this.logger.debug("convertToFhir", "No observation event time found");
-        }
-
-        // there is usually only one of these
-        for (CD interpretation : result.getInterpretation()) {
-            CodeableConcept statusReason = this.codeableConceptConverter.convertToFhir(interpretation);
-            immunization.addReasonCode(statusReason);
         }
 
         try {
@@ -327,15 +275,20 @@ public class ImmunizationConverter implements CdsConverter, FhirConverter<Substa
      * @param SubstanceAdministrationEvent event
      * @return Immunization
      */
-    public Immunization convertToFhir(SubstanceAdministrationEvent event) {
+    public Immunization convertToFhir(Patient patient, SubstanceAdministrationEvent event) {
         Immunization immunization = new Immunization();
 
-        // there is usually only one template id but we can have several
-        // we mark it as a template id and throw it in identifiers
-        for (II templateId : event.getTemplateId()) {
-            Identifier templateIdentifier = this.identifierFactory.create("templateId", templateId.getRoot());
-            immunization.addIdentifier(templateIdentifier);
-        }
+        Meta meta = new Meta();
+        meta.addProfile("http://hl7.org/fhir/us/ImmunizationFHIRDS/StructureDefinition/immds-immunization");
+
+        immunization.setMeta(meta);
+        immunization.setId(UUID.randomUUID().toString());
+        immunization.setStatus(ImmunizationStatus.COMPLETED);
+
+        Reference patientReference = new Reference();
+        patientReference.setReference("Patient/" + patient.getId());
+
+        immunization.setPatient(patientReference);
 
         if (event.getIsValid() != null) {
             immunization.setStatus(this.immunizationStatusConverter.convertToFhir(event.getIsValid()));
@@ -343,25 +296,15 @@ public class ImmunizationConverter implements CdsConverter, FhirConverter<Substa
 
         try {
             // we don't want to stop here if a bad date, just ignore it and continue
+            DateTimeType dateTime = new DateTimeType();
             Date administeredDate = this.dateFormat.parse(event.getAdministrationTimeInterval().getHigh());
-            immunization.setRecorded(administeredDate);
+            dateTime.setValue(administeredDate);
+
+            immunization.setOccurrence(dateTime);
         } catch (ParseException exception) {
             this.logger.debug("convertToFhir", "Improper administration time interval format");
         } catch (NullPointerException exception) {
             this.logger.debug("convertToFhir", "No administration time interval found");
-        }
-
-        try {
-            String extension = event.getId().getExtension();
-
-            if (!extension.equals("")) {
-                Identifier idExtension = this.identifierFactory.create("idExtension", event.getId().getExtension());
-                immunization.addIdentifier(idExtension);
-            }
-
-            immunization.setId(event.getId().getRoot());
-        } catch (NullPointerException exception) {
-            this.logger.debug("convertToFhir", "No id found");
         }
 
         try {
@@ -371,13 +314,6 @@ public class ImmunizationConverter implements CdsConverter, FhirConverter<Substa
             immunization.setVaccineCode(vaccineCode);
         } catch (NullPointerException exception) {
             this.logger.debug("convertToFhir", "No substance found for vaccine code");
-        }
-
-        try {
-            CodeableConcept reason = this.codeableConceptConverter.convertToFhir(event.getSubstanceAdministrationGeneralPurpose());
-            immunization.addReasonCode(reason);
-        } catch (NullPointerException exception) {
-            this.logger.debug("convertToFhir", "No substance administration event found");
         }
 
         return immunization;
