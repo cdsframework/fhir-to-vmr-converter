@@ -13,6 +13,7 @@ import org.cdsframework.util.LogUtils;
 import org.hl7.fhir.r4.model.Immunization;
 import org.hl7.fhir.r4.model.ImmunizationEvaluation;
 import org.hl7.fhir.r4.model.ImmunizationRecommendation;
+import org.hl7.fhir.r4.model.Observation;
 import org.hl7.fhir.r4.model.Patient;
 import org.hl7.fhir.r4.model.Reference;
 import org.json.JSONObject;
@@ -144,32 +145,14 @@ public class Fhir2Vmr {
     /**
      * @see getCdsOutputFromFhir(Patient, List<Immunization>, List<Immunization>, List<ImmunizationEvalution>, List<ImmunizationRecommendation>)
      */
-    public CDSOutput getCdsOutputFromFhir(Patient patient, List<Immunization> observations) {
+    public CDSOutput getCdsOutputFromFhir(Patient patient, List<Immunization> immunizations) {
         CDSOutput output = this.getCdsOutputFromFhir(patient);
 
-        ObservationResults observationResults = new ObservationResults();
-        ClinicalStatements clinicalStatements = new ClinicalStatements();
-
-        for (Immunization immunization : observations) {
-            ObservationResult observation = this.immunizationConverter.convertToCdsObservation(immunization);
-            observationResults.getObservationResult().add(observation);
+        ClinicalStatements clinicalStatements = output.getVmrOutput().getPatient().getClinicalStatements();
+        if (clinicalStatements == null) {
+            clinicalStatements = new ClinicalStatements();
+            output.getVmrOutput().getPatient().setClinicalStatements(clinicalStatements);
         }
-
-        output.getVmrOutput().getPatient().setClinicalStatements(clinicalStatements);
-        clinicalStatements.setObservationResults(observationResults);
-
-        return output;
-    }
-
-    /**
-     * @see getCdsOutputFromFhir(Patient, List<Immunization>, List<Immunization>, List<ImmunizationEvalution>, List<ImmunizationRecommendation>)
-     */
-    public CDSOutput getCdsOutputFromFhir(
-        Patient patient,
-        List<Immunization> observations,
-        List<Immunization> immunizations
-    ) {
-        CDSOutput output = this.getCdsOutputFromFhir(patient, observations);
 
         SubstanceAdministrationEvents events = this.immunizationConverter.convertToCds(immunizations);
 
@@ -185,7 +168,26 @@ public class Fhir2Vmr {
      */
     public CDSOutput getCdsOutputFromFhir(
         Patient patient,
-        List<Immunization> observations,
+        List<Observation> observations,
+        List<Immunization> immunizations
+    ) {
+        CDSOutput output = this.getCdsOutputFromFhir(patient, immunizations);
+
+        SubstanceAdministrationEvents events = this.immunizationConverter.convertToCds(immunizations);
+
+        if (!events.getSubstanceAdministrationEvent().isEmpty()) {
+            output.getVmrOutput().getPatient().getClinicalStatements().setSubstanceAdministrationEvents(events);
+        }
+
+        return output;
+    }
+
+    /**
+     * @see getCdsOutputFromFhir(Patient, List<Immunization>, List<Immunization>, List<ImmunizationEvalution>, List<ImmunizationRecommendation>)
+     */
+    public CDSOutput getCdsOutputFromFhir(
+        Patient patient,
+        List<Observation> observations,
         List<Immunization> immunizations,
         List<ImmunizationEvaluation> evaluations
     ) {
@@ -221,8 +223,8 @@ public class Fhir2Vmr {
 
     /**
      * This method combines multiple FHIR components into a CDSOutput object. A CDSOutput object can consist
-     * of a Patient as well as multiple immunizations representing both observations and immunizations,
-     * immunization evaluations as well as immunization recommendations.
+ of a Patient as well as multiple immunizations representing both observations and immunizations,
+ observation evaluations as well as observation recommendations.
      *
      * @param Patient patient : a FHIR patient object
      * @param List<Immunization> observations : multiple FHIR Immunizations representing observations
@@ -233,7 +235,7 @@ public class Fhir2Vmr {
      */
     public CDSOutput getCdsOutputFromFhir(
         Patient patient,
-        List<Immunization> observations,
+        List<Observation> observations,
         List<Immunization> immunizations,
         List<ImmunizationEvaluation> evaluations,
         List<ImmunizationRecommendation> recommendations
@@ -276,7 +278,7 @@ public class Fhir2Vmr {
                 // this should be a primitive
                 switch (object.getString("name")) {
                     case "immunization":
-                        // convert immunization data
+                        // convert observation data
                         wrapper = this.immunizationConverter.convertToCds(wrapper, object.getJSONObject("resource"));
                         break;
 
@@ -310,14 +312,14 @@ public class Fhir2Vmr {
     /**
      * @see getCdsInputFromFhir(Patient, List<Immunization>, List<Immunization>)
      */
-    public CDSInput getCdsInputFromFhir(Patient patient, List<Immunization> observations) {
+    public CDSInput getCdsInputFromFhir(Patient patient, List<Observation> observations) {
         CDSInput input = this.getCdsInputFromFhir(patient);
         ObservationResults observationResults = new ObservationResults();
         ClinicalStatements clinicalStatements = new ClinicalStatements();
 
-        for (Immunization immunization : observations) {
-            ObservationResult observation = this.immunizationConverter.convertToCdsObservation(immunization);
-            observationResults.getObservationResult().add(observation);
+        for (Observation observation : observations) {
+            ObservationResult observationResult = this.immunizationConverter.convertToCdsObservation(observation);
+            observationResults.getObservationResult().add(observationResult);
         }
 
         input.getVmrInput().getPatient().setClinicalStatements(clinicalStatements);
@@ -335,7 +337,7 @@ public class Fhir2Vmr {
      * @param List<Immunization> observations : a list of immunizations received already
      * @return CDSInput
      */
-    public CDSInput getCdsInputFromFhir(Patient patient, List<Immunization> immunizations, List<Immunization> observations) {
+    public CDSInput getCdsInputFromFhir(Patient patient, List<Immunization> immunizations, List<Observation> observations) {
         CDSInput input = this.getCdsInputFromFhir(patient, observations);
 
         SubstanceAdministrationEvents substanceAdministrationEvents = this.immunizationConverter.convertToCds(immunizations);

@@ -32,6 +32,7 @@ import org.opencds.vmr.v1_0.schema.SubstanceAdministrationEvent;
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.IParser;
 import ca.uhn.fhir.parser.StrictErrorHandler;
+import org.hl7.fhir.r4.model.Observation;
 
 /**
  * @author sdn
@@ -49,34 +50,35 @@ public class ImmunizationConverter implements CdsConverter {
      * This converts a FHIR Immunization object into an ObservationResult OpenCDS object. There
      * is some overlap between this and the SubstanceAdministrationEvent version of this method.
      *
-     * @param Immunization immunization : the FHIR Immunization object
+     * @param Immunization observation : the FHIR Immunization object
      * @return ObservationResult
      */
-    public ObservationResult convertToCdsObservation(Immunization immunization) {
-        ObservationResult observation = new ObservationResult();
+    public ObservationResult convertToCdsObservation(Observation observation) {
+        ObservationResult observationResult = new ObservationResult();
+        // TODO: FIX THIS
+//
+//        CD observationFocus = this.codeableConceptConverter.convertToCds(observationResult.getVaccineCode());
+//        observation.setObservationFocus(observationFocus);
+//
+//        try {
+//            // this is safe because if we can't access the date, we don't need to set it anyway
+//            IVLTS observationEventTime = new IVLTS();
+//            String observationTime = this.dateFormat.format(observation.getOccurrenceDateTimeType().getValue());
+//            observationEventTime.setHigh(observationTime);
+//            observationEventTime.setLow(observationTime);
+//            observation.setObservationEventTime(observationEventTime);
+//        } catch (NullPointerException exception) {
+//            this.logger.debug("convertToCdsObservation", "No date found in immunization");
+//        }
+//
+//        CodeableConcept statusReason = observation.getStatusReason();
+//        CD observationValueCode = this.codeableConceptConverter.convertToCds(statusReason);
+//        ObservationValue observationValue = new ObservationValue();
+//
+//        observationValue.setConcept(observationValueCode);
+//        observation.setObservationValue(observationValue);
 
-        CD observationFocus = this.codeableConceptConverter.convertToCds(immunization.getVaccineCode());
-        observation.setObservationFocus(observationFocus);
-
-        try {
-            // this is safe because if we can't access the date, we don't need to set it anyway
-            IVLTS observationEventTime = new IVLTS();
-            String observationTime = this.dateFormat.format(immunization.getOccurrenceDateTimeType().getValue());
-            observationEventTime.setHigh(observationTime);
-            observationEventTime.setLow(observationTime);
-            observation.setObservationEventTime(observationEventTime);
-        } catch (NullPointerException exception) {
-            this.logger.debug("convertToCdsObservation", "No date found in immunization");
-        }
-
-        CodeableConcept statusReason = immunization.getStatusReason();
-        CD observationValueCode = this.codeableConceptConverter.convertToCds(statusReason);
-        ObservationValue observationValue = new ObservationValue();
-
-        observationValue.setConcept(observationValueCode);
-        observation.setObservationValue(observationValue);
-
-        return observation;
+        return observationResult;
     }
 
     /**
